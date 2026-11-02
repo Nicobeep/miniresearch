@@ -7,7 +7,7 @@
 <title>MiniResearch: PubMed Reading List</title>
 <style>
 :root {
---bg: #f6f7fb; --surface: #ffffff; --surface-2: #f1f3f9; --text: #0f172a; --muted: #64748b;
+--bg: #f6f7fb; --surface: #ffffff; --surface-2: #f1f3f9; --well: #e3e8f1; --text: #0f172a; --muted: #64748b;
 --line: #e2e8f0; --accent: #1e3a5f; --accent-hover: #162d4a; --accent-soft: #eaf0f7;
 --danger: #dc2626; --danger-soft: #fef2f2; --ok: #15803d;
 --shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 6px 18px rgba(15, 23, 42, .06);
@@ -16,7 +16,7 @@ color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
 :root:not([data-theme="light"]) {
---bg: #0b0d14; --surface: #141826; --surface-2: #1b2030; --text: #e5e7eb; --muted: #94a3b8;
+--bg: #0b0d14; --surface: #141826; --surface-2: #1b2030; --well: #080a10; --text: #e5e7eb; --muted: #94a3b8;
 --line: #262c3d; --accent: #9fb8d9; --accent-hover: #c3d4ea; --accent-soft: #1a2533;
 --danger: #f87171; --danger-soft: #2a1718; --ok: #4ade80;
 --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .3);
@@ -128,6 +128,10 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .check-row { display: flex; align-items: center; gap: 8px; font-size: .88rem; }
 .check-row input { width: 16px; height: 16px; accent-color: var(--accent); }
 /* AI chat */
+.chatbox { background: var(--well); border: 1px solid var(--line); border-radius: 14px; padding: 18px 18px 20px; display: grid; gap: 16px; }
+.chatbox .chat { margin: 0; max-height: 360px; overflow: auto; padding-right: 2px; }
+.chatbox .form { gap: 10px; margin-top: 16px; }
+#chatIn { min-height: 44px; max-height: 220px; resize: none; overflow-y: auto; line-height: 1.45; padding: 10px 12px; }
 .chat { display: grid; gap: 10px; margin: 12px 0; max-height: 360px; overflow: auto; padding-right: 2px; }
 .chat:empty { display: none; }
 .msg { font-size: .92rem; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line); background: var(--surface); }
@@ -231,17 +235,19 @@ dialog.welcome .actions { justify-content: flex-end; }
 <h2 id="helperTitle">AI query helper</h2>
 <span class="pill">Gemini or Claude</span>
 </div>
-<p class="card-sub">Describe your topic in plain language. The helper suggests a PubMed query, runs it against PubMed. Review every query before relying on it.</p>
+<p class="card-sub">The helper suggests a PubMed query, runs it against PubMed. Review every query before relying on it.</p>
+<div class="chatbox">
 <div id="chat" class="chat" aria-live="polite"></div>
 <form id="chatForm" class="form" autocomplete="off">
 <label for="chatIn" class="sr">Describe your research topic</label>
-<textarea id="chatIn" rows="3" maxlength="1500"
+<textarea id="chatIn" rows="1" maxlength="1500"
 placeholder="e.g. Do anxiety or depression increase the chance that adults with jaw joint disorders need surgery?"></textarea>
 <div class="actions">
 <button class="primary" id="chatSend" type="submit">Send</button>
 <button class="secondary" id="chatClear" type="button">New chat</button>
 </div>
 </form>
+</div>
 <details class="settings" id="aiSettings">
 <summary>AI settings and your API key</summary>
 <div class="form">
@@ -729,6 +735,12 @@ greet();
 </script>
 <script>
 (function () {
+var ta = document.getElementById("chatIn");
+function fit() { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight + 2, 220) + "px"; }
+ta.addEventListener("input", fit);
+document.getElementById("chatForm").addEventListener("submit", function () { setTimeout(fit, 0); });
+document.getElementById("chatClear").addEventListener("click", function () { setTimeout(fit, 0); });
+fit();
 var d = document.getElementById("welcome");
 var ok = document.getElementById("welcomeOk");
 if (!d) return;
