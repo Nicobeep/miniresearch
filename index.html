@@ -9,7 +9,7 @@
 :root {
 --bg: #f6f7fb; --surface: #ffffff; --surface-2: #f1f3f9; --well: #e3e8f1; --text: #0f172a; --muted: #64748b;
 --line: #e2e8f0; --accent: #1e3a5f; --accent-hover: #162d4a; --accent-soft: #eaf0f7;
---danger: #dc2626; --danger-soft: #fef2f2; --ok: #15803d;
+--danger: #dc2626; --danger-soft: #fef2f2; --ok: #15803d; --on-accent: #ffffff;
 --shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 6px 18px rgba(15, 23, 42, .06);
 --radius: 14px; --focus: 0 0 0 3px rgba(30, 58, 95, .35);
 color-scheme: light;
@@ -18,10 +18,17 @@ color-scheme: light;
 :root:not([data-theme="light"]) {
 --bg: #0b0d14; --surface: #141826; --surface-2: #1b2030; --well: #080a10; --text: #e5e7eb; --muted: #94a3b8;
 --line: #262c3d; --accent: #9fb8d9; --accent-hover: #c3d4ea; --accent-soft: #1a2533;
---danger: #f87171; --danger-soft: #2a1718; --ok: #4ade80;
+--danger: #f87171; --danger-soft: #2a1718; --ok: #4ade80; --on-accent: #0b0d14;
 --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .3);
 color-scheme: dark;
 }
+}
+:root[data-theme="dark"] {
+--bg: #0b0d14; --surface: #141826; --surface-2: #1b2030; --well: #080a10; --text: #e5e7eb; --muted: #94a3b8;
+--line: #262c3d; --accent: #9fb8d9; --accent-hover: #c3d4ea; --accent-soft: #1a2533;
+--danger: #f87171; --danger-soft: #2a1718; --ok: #4ade80; --on-accent: #0b0d14;
+--shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .3);
+color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -112,7 +119,7 @@ border-radius: 10px; border: 1px solid var(--line); background: var(--surface); 
 transition: background .15s, border-color .15s, color .15s; white-space: nowrap;
 }
 button:hover { background: var(--surface-2); }
-button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 button.secondary { color: var(--text); }
 button:disabled { opacity: .55; cursor: not-allowed; }
@@ -136,7 +143,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .chat:empty { display: none; }
 .msg { font-size: .92rem; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line); background: var(--surface); }
 .msg p { margin: 0; white-space: pre-wrap; }
-.msg.user { background: var(--accent); border-color: var(--accent); color: #fff; justify-self: end; max-width: 88%; }
+.msg.user { background: var(--accent); border-color: var(--accent); color: var(--on-accent); justify-self: end; max-width: 88%; }
 .msg.assistant { justify-self: start; max-width: 100%; background: var(--surface-2); border-left: 3px solid var(--accent); }
 .msg.err { background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 40%, transparent); color: var(--danger); }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
@@ -190,6 +197,13 @@ text-align: center; color: var(--muted); padding: 36px 12px; border: 1px dashed 
 }
 footer { color: var(--muted); font-size: .8rem; line-height: 1.6; padding: 0 4px 24px; }
 footer p { margin: 0 0 4px; }
+.theme-switch { display: inline-flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 600; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; }
+.theme-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.theme-switch .track { position: relative; width: 38px; height: 22px; border-radius: 999px; background: var(--line); transition: background .2s; }
+.theme-switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .2s; }
+.theme-switch input:checked + .track { background: var(--accent); }
+.theme-switch input:checked + .track::after { transform: translateX(16px); }
+.theme-switch input:focus-visible + .track { box-shadow: var(--focus); }
 /* welcome dialog */
 dialog.welcome {
 border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--text);
@@ -221,10 +235,11 @@ dialog.welcome .actions { justify-content: flex-end; }
 <span class="logo" aria-hidden="true">M</span>
 <div>
 <div class="brand-name">MiniResearch</div>
-<div class="brand-tag">PubMed reading list builder, fast</div>
+<div class="brand-tag">Personal PubMed reading list builder</div>
 </div>
 </div>
 <div class="spacer"></div>
+<label class="theme-switch" title="Switch between light and dark mode"><input type="checkbox" id="themeSwitch" aria-label="Dark mode"><span class="track" aria-hidden="true"></span><span>Dark</span></label>
 <span class="pill">Free NCBI PubMed data</span>
 </div>
 </header>
@@ -235,7 +250,7 @@ dialog.welcome .actions { justify-content: flex-end; }
 <h2 id="helperTitle">AI query helper</h2>
 <span class="pill">Gemini or Claude</span>
 </div>
-<p class="card-sub">The helper suggests a PubMed query, runs it against PubMed. Review every query before relying on it.</p>
+<p class="card-sub">Describe your topic in plain language. The helper suggests a PubMed query, runs it against PubMed. Review every query before relying on it.</p>
 <div class="chatbox">
 <div id="chat" class="chat" aria-live="polite"></div>
 <form id="chatForm" class="form" autocomplete="off">
@@ -746,6 +761,21 @@ var ok = document.getElementById("welcomeOk");
 if (!d) return;
 ok.addEventListener("click", function () { d.close(); });
 try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
+})();
+</script>
+<script>
+(function () {
+var root = document.documentElement, sw = document.getElementById("themeSwitch");
+var mq = window.matchMedia("(prefers-color-scheme: dark)");
+function apply(t) { root.setAttribute("data-theme", t); sw.checked = t === "dark"; }
+var saved = null;
+try { saved = localStorage.getItem("mr_theme"); } catch (e) { }
+if (saved === "dark" || saved === "light") apply(saved); else sw.checked = mq.matches;
+sw.addEventListener("change", function () {
+var t = sw.checked ? "dark" : "light";
+apply(t);
+try { localStorage.setItem("mr_theme", t); } catch (e) { }
+});
 })();
 </script>
 </body>
