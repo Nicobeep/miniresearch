@@ -107,13 +107,14 @@
   <p class="sub">Search PubMed, pick the articles you want, and export them for EndNote, Zotero, or a spreadsheet.</p>
 
   <div class="notice" role="note">
-    Search terms are sent to the free NCBI PubMed service. If you use the optional AI query helper, what you type
-    there also goes to the AI provider you choose. Do <strong>not</strong> enter patient data or other protected health
+    Search terms are sent to the free NCBI PubMed database. If you use the 
+    AI query helper, what you type
+    there also goes to the AI model you choose. Do <strong>not</strong> enter patient data or other protected health
     information. Always verify citations against the publisher or PubMed before using them.
   </div>
 
   <section class="helper" aria-labelledby="helperTitle">
-    <h2 id="helperTitle">Query helper (AI)</h2>
+    <h2 id="helperTitle">AI Query helper (Gemini/Anthropic)</h2>
     <p class="hint">Describe your topic in plain language. The helper suggests a PubMed query (MeSH terms, [tiab] fields,
       AND / OR / NOT, quotes), and this page checks it against PubMed. AI can be wrong, so review every query before relying on it.</p>
     <div id="chat" class="chat" aria-live="polite"></div>
@@ -129,7 +130,7 @@
     <details class="settings" id="aiSettings">
       <summary>AI settings (your own API key)</summary>
       <div class="row">
-        <div><label for="provider">AI provider</label>
+        <div><label for="provider">AI model</label>
           <select id="provider">
             <option value="gemini">Google Gemini (free tier available)</option>
             <option value="claude">Anthropic Claude (paid)</option>
