@@ -4,12 +4,7 @@ A single web page that helps you build a PubMed search, pick articles, and expor
 
 ## Setup (once)
 
-1. Keep `index.html` in any folder.
-2. Open it in a modern browser by double-clicking it.
-3. Optional: for the query helper, get a free Google Gemini key at aistudio.google.com. You can also use an Anthropic Claude key.
-   - Expand **AI settings**.
-   - Choose a provider, paste the key, and check the model name.
-   - Leave **Remember the key** unticked on shared computers.
+Live at: http://127.0.0.1:8080/
 
 ## Steps
 
