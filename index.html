@@ -132,9 +132,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .chat:empty { display: none; }
 .msg { font-size: .92rem; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line); background: var(--surface); }
 .msg p { margin: 0; white-space: pre-wrap; }
-.msg .who { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; opacity: .8; }
 .msg.user { background: var(--accent); border-color: var(--accent); color: #fff; justify-self: end; max-width: 88%; }
-.msg.user .who { opacity: .85; }
 .msg.assistant { justify-self: start; max-width: 100%; background: var(--surface-2); border-left: 3px solid var(--accent); }
 .msg.err { background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 40%, transparent); color: var(--danger); }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
@@ -219,7 +217,7 @@ dialog.welcome .actions { justify-content: flex-end; }
 <span class="logo" aria-hidden="true">M</span>
 <div>
 <div class="brand-name">MiniResearch</div>
-<div class="brand-tag">PubMed reading list builder, fast</div>
+<div class="brand-tag">Personal PubMed reading list builder</div>
 </div>
 </div>
 <div class="spacer"></div>
@@ -648,9 +646,6 @@ provider = $("provider").value; store.set("pm_provider", provider, true); loadPr
 const chat = $("chat"); let history = [], busy = false;
 function addMsg(role, text, opts = {}) {
 const d = document.createElement("div"); d.className = `msg ${role}${opts.err ? " err" : ""}`;
-const who = document.createElement("div"); who.className = "who";
-who.textContent = role === "user" ? "You" : "AI helper";
-d.appendChild(who);
 const body = text.replace(/```[\s\S]*?```/g, "").trim();
 if (body) { const p = document.createElement("p"); p.textContent = body; d.appendChild(p); }
 if (opts.query) {
