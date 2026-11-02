@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://eutils.ncbi.nlm.nih.gov https://generativelanguage.googleapis.com https://api.anthropic.com; base-uri 'none'">
-<title>PubMed Reading List Builder</title>
+<title>MiniResearch</title>
 <style>
   :root {
     --bg: #fafaf8; --surface: #ffffff; --text: #1c1c1a; --muted: #62625c;
@@ -103,20 +103,20 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>PubMed Reading List Builder</h1>
-  <p class="sub">Search PubMed, pick the articles you want, and export them for EndNote, Zotero, or a spreadsheet.</p>
+  <h1>MiniResearch</h1>
+  <p class="sub">Personal PubMed Reading List Builder. Search PubMed, pick the articles you want, and export them for EndNote, Zotero, or a spreadsheet.</p>
 
   <div class="notice" role="note">
     Search terms are sent to the free NCBI PubMed database. If you use the 
     AI query helper, what you type
-    there also goes to the AI model you choose. Do <strong>not</strong> enter patient data or other protected health
+    also goes to the AI model you choose. Do <strong>not</strong> enter patient data or other protected health
     information. Always verify citations against the publisher or PubMed before using them.
   </div>
 
   <section class="helper" aria-labelledby="helperTitle">
     <h2 id="helperTitle">AI Query helper (Gemini/Anthropic)</h2>
     <p class="hint">Describe your topic in plain language. The helper suggests a PubMed query (MeSH terms, [tiab] fields,
-      AND / OR / NOT, quotes), and this page checks it against PubMed. AI can be wrong, so review every query before relying on it.</p>
+      AND / OR / NOT, quotes), this page checks it against PubMed. AI can be wrong, review every query before relying on it.</p>
     <div id="chat" class="chat" aria-live="polite"></div>
     <form id="chatForm" autocomplete="off">
       <label for="chatIn" class="sr">Describe your research topic</label>
@@ -141,11 +141,11 @@
           <input id="model" type="text" spellcheck="false"></div>
       </div>
       <p class="hint" id="keyHelp"></p>
-      <label style="font-weight:400;margin-top:8px"><input type="checkbox" id="remember"> Remember the key on this device</label>
-      <p class="hint">The key stays in this browser and is sent only to the provider you choose. What you type in the helper
-        is also sent to that provider. Free tiers may allow the provider to use submitted text to improve its products, so check
+      <label style="font-weight:400;margin-top:8px"><input type="checkbox" id="remember"> Remember API key on this device</label>
+      <p class="hint">The key stays in this browser and is sent only to the chosen AI model. What you type in the helper
+        is also sent to that model. Free tiers may allow the model to use submitted text to improve its products, check
         the provider's current terms. Do not include patient data or unpublished details your institution restricts.
-        Don't remember the key on a shared computer.</p>
+        Do not remember your key on a shared computer.</p>
     </details>
   </section>
 
@@ -174,7 +174,7 @@
     </div>
 
     <fieldset>
-      <legend>Article type (optional)</legend>
+      <legend>Article type</legend>
       <div class="checks" id="types">
         <label><input type="checkbox" value="Systematic Review[pt]"> Systematic review</label>
         <label><input type="checkbox" value="Meta-Analysis[pt]"> Meta-analysis</label>
