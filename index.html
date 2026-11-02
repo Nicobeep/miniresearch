@@ -6,776 +6,739 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://eutils.ncbi.nlm.nih.gov https://generativelanguage.googleapis.com https://api.anthropic.com; base-uri 'none'; form-action 'none'">
 <title>MiniResearch: PubMed Reading List</title>
 <style>
-  :root {
-    --bg: #f6f7fb; --surface: #ffffff; --surface-2: #f1f3f9; --text: #0f172a; --muted: #64748b;
-    --line: #e2e8f0; --accent: #1e3a5f; --accent-hover: #162d4a; --accent-soft: #eaf0f7;
-    --danger: #dc2626; --danger-soft: #fef2f2; --ok: #15803d;
-    --shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 6px 18px rgba(15, 23, 42, .06);
-    --radius: 14px; --focus: 0 0 0 3px rgba(30, 58, 95, .35);
-    color-scheme: light;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0b0d14; --surface: #141826; --surface-2: #1b2030; --text: #e5e7eb; --muted: #94a3b8;
-      --line: #262c3d; --accent: #9fb8d9; --accent-hover: #c3d4ea; --accent-soft: #1a2533;
-      --danger: #f87171; --danger-soft: #2a1718; --ok: #4ade80;
-      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .3);
-      color-scheme: dark;
-    }
-  }
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  }
-  h1, h2, h3 { margin: 0; line-height: 1.25; }
-  a { color: var(--accent); }
-  a:hover { color: var(--accent-hover); }
-  :focus-visible { outline: none; box-shadow: var(--focus); border-radius: 8px; }
-
-  /* top bar */
-  .topbar {
-    position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--surface) 92%, transparent);
-    backdrop-filter: saturate(1.4) blur(8px); border-bottom: 1px solid var(--line);
-  }
-  .topbar-inner { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
-  .logo {
-    width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
-    background: linear-gradient(135deg, #2f5383, #1e3a5f); color: #fff; font-weight: 800; font-size: 16px;
-    box-shadow: 0 4px 12px rgba(30, 58, 95, .35);
-  }
-  .brand-name { font-weight: 700; font-size: 1rem; }
-  .brand-tag { color: var(--muted); font-size: .82rem; }
-  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .spacer { flex: 1; }
-  .pill {
-    font-size: .75rem; font-weight: 600; color: var(--accent); background: var(--accent-soft);
-    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
-  }
-
-  /* layout */
-  .layout { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; gap: 20px; }
-  .col-left, .col-right { display: grid; gap: 20px; align-content: start; min-width: 0; }
-  @media (min-width: 980px) {
-    .layout { grid-template-columns: 380px minmax(0, 1fr); align-items: start; }
-    .col-left { position: sticky; top: 76px; max-height: calc(100vh - 96px); overflow: auto; padding-right: 4px; }
-  }
-
-  /* cards */
-  .card {
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    box-shadow: var(--shadow); padding: 18px;
-  }
-  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
-  .card h2 { font-size: 1rem; font-weight: 650; }
-  .card-sub { color: var(--muted); font-size: .85rem; margin: 4px 0 0; }
-
-  /* notice */
-  .notice {
-    background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
-    color: var(--text); border-radius: 12px; padding: 12px 14px; font-size: .9rem;
-  }
-  .notice strong { font-weight: 700; }
-
-  /* form controls */
-  form { margin: 0; }
-  .form { display: grid; gap: 14px; }
-  .field { display: grid; gap: 6px; min-width: 0; }
-  .field > label, legend { font-size: .82rem; font-weight: 600; color: var(--text); }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  input[type=text], input[type=number], input[type=password], select, textarea {
-    width: 100%; height: 40px; padding: 0 12px; font: inherit; color: var(--text);
-    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  textarea { height: auto; min-height: 84px; padding: 10px 12px; resize: vertical; }
-  input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent); }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus); }
-  select { appearance: auto; }
-  fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 8px; }
-  .hint { color: var(--muted); font-size: .8rem; margin: 0; }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-
-  /* query box wraps long searches onto new lines */
-  #q { height: auto; min-height: 44px; padding: 9px 12px; line-height: 1.45; resize: vertical;
-       white-space: pre-wrap; overflow-wrap: anywhere; }
-
-  /* chips for article types */
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    position: relative; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
-    padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: .84rem; color: var(--text);
-    background: var(--surface); transition: all .15s;
-  }
-  .chip:hover { border-color: var(--accent); }
-  .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
-  .chip:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
-  .chip:has(input:focus-visible) { box-shadow: var(--focus); }
-
-  /* buttons */
-  button {
-    font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; height: 38px; padding: 0 14px;
-    border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text);
-    transition: background .15s, border-color .15s, color .15s; white-space: nowrap;
-  }
-  button:hover { background: var(--surface-2); }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-  button.secondary { color: var(--text); }
-  button:disabled { opacity: .55; cursor: not-allowed; }
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
-  .actions .primary { flex: 1 1 auto; }
-
-  /* settings */
-  .settings { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
-  .settings > summary { cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--muted); list-style: none; }
-  .settings > summary::-webkit-details-marker { display: none; }
-  .settings > summary::after { content: "+"; float: right; color: var(--muted); }
-  .settings[open] > summary::after { content: "\2212"; }
-  .settings .form { margin-top: 12px; }
-  .check-row { display: flex; align-items: center; gap: 8px; font-size: .88rem; }
-  .check-row input { width: 16px; height: 16px; accent-color: var(--accent); }
-
-  /* AI chat */
-  .chat { display: grid; gap: 10px; margin: 12px 0; max-height: 360px; overflow: auto; padding-right: 2px; }
-  .chat:empty { display: none; }
-  .msg { font-size: .92rem; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line); background: var(--surface); }
-  .msg p { margin: 0; white-space: pre-wrap; }
-  .msg.user { background: var(--accent); border-color: var(--accent); color: #fff; justify-self: end; max-width: 88%; }
-  .msg.assistant { justify-self: start; max-width: 100%; }
-  .msg.err { background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 40%, transparent); color: var(--danger); }
-  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-  .btns button { height: 32px; font-size: .82rem; padding: 0 12px; }
-  pre.q {
-    background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
-    margin: 8px 0 0; white-space: pre-wrap; word-break: break-word;
-    font: .84rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  }
-  .checkout, .check {
-    background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
-    padding: 10px 12px; margin-top: 8px; font-size: .88rem;
-  }
-  .checkout ul, .check ul { margin: 6px 0; padding-left: 18px; }
-  .checkout p, .check p { margin: 0; }
-  .ok { color: var(--ok); }
-  .bad { color: var(--danger); }
-  .checkout pre, .check pre { white-space: pre-wrap; word-break: break-word; font-size: .8rem; margin: 6px 0 0; }
-  .check summary, .checkout summary { cursor: pointer; color: var(--accent); margin-top: 6px; }
-
-  /* results */
-  .results-head { display: grid; gap: 10px; margin-bottom: 12px; }
-  #status { color: var(--muted); font-size: .9rem; min-height: 1.4em; }
-  #status.error { color: var(--danger); }
-  .toolbar { display: none; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .toolbar.on { display: flex; }
-  .toolbar .grow { flex: 1 1 auto; color: var(--muted); font-size: .88rem; }
-  ol#results { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-  li.result {
-    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; padding: 16px;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; transition: border-color .15s;
-  }
-  li.result:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-  li.result input[type=checkbox] { margin-top: 5px; width: 17px; height: 17px; accent-color: var(--accent); }
-  .title { font-size: 1rem; font-weight: 650; line-height: 1.35; margin: 0 0 4px; }
-  .title a { color: var(--text); text-decoration: none; }
-  .title a:hover { color: var(--accent); text-decoration: underline; }
-  .meta { color: var(--muted); font-size: .88rem; margin: 0; }
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .tag {
-    font-size: .74rem; font-weight: 600; padding: 3px 9px; border-radius: 999px;
-    background: var(--accent-soft); color: var(--accent);
-  }
-  details { margin-top: 8px; }
-  details summary { cursor: pointer; color: var(--accent); font-size: .86rem; font-weight: 600; }
-  .abs { font-size: .9rem; margin: 8px 0 0; white-space: pre-wrap; color: var(--text); }
-  .abs b { font-weight: 650; }
-  .links { font-size: .82rem; color: var(--muted); margin-top: 8px; }
-  .links a { font-weight: 600; }
-  .empty {
-    text-align: center; color: var(--muted); padding: 36px 12px; border: 1px dashed var(--line); border-radius: 12px; font-size: .92rem;
-  }
-
-  footer { color: var(--muted); font-size: .8rem; line-height: 1.6; padding: 0 4px 24px; }
-  footer p { margin: 0 0 4px; }
-
-  /* welcome dialog */
-  dialog.welcome {
-    border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--text);
-    box-shadow: 0 20px 50px rgba(15, 23, 42, .25); padding: 24px; max-width: min(440px, calc(100vw - 32px));
-  }
-  dialog.welcome::backdrop { background: rgba(15, 23, 42, .45); }
-  dialog.welcome h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
-  dialog.welcome p { margin: 0 0 16px; color: var(--muted); font-size: .95rem; }
-  dialog.welcome .actions { justify-content: flex-end; }
-
-  @media (max-width: 520px) {
-    .layout { padding: 14px; gap: 14px; }
-    .card { padding: 14px; }
-    .grid2 { grid-template-columns: 1fr; }
-    .brand-tag { display: none; }
-    .pill { display: none; }
-    .topbar-inner { padding: 10px 14px; }
-  }
+:root {
+--bg: #f6f7fb; --surface: #ffffff; --surface-2: #f1f3f9; --text: #0f172a; --muted: #64748b;
+--line: #e2e8f0; --accent: #1e3a5f; --accent-hover: #162d4a; --accent-soft: #eaf0f7;
+--danger: #dc2626; --danger-soft: #fef2f2; --ok: #15803d;
+--shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 6px 18px rgba(15, 23, 42, .06);
+--radius: 14px; --focus: 0 0 0 3px rgba(30, 58, 95, .35);
+color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+:root:not([data-theme="light"]) {
+--bg: #0b0d14; --surface: #141826; --surface-2: #1b2030; --text: #e5e7eb; --muted: #94a3b8;
+--line: #262c3d; --accent: #9fb8d9; --accent-hover: #c3d4ea; --accent-soft: #1a2533;
+--danger: #f87171; --danger-soft: #2a1718; --ok: #4ade80;
+--shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .3);
+color-scheme: dark;
+}
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+margin: 0; background: var(--bg); color: var(--text);
+font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+h1, h2, h3 { margin: 0; line-height: 1.25; }
+a { color: var(--accent); }
+a:hover { color: var(--accent-hover); }
+:focus-visible { outline: none; box-shadow: var(--focus); border-radius: 8px; }
+/* top bar */
+.topbar {
+position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--surface) 92%, transparent);
+backdrop-filter: saturate(1.4) blur(8px); border-bottom: 1px solid var(--line);
+}
+.topbar-inner { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+.logo {
+width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+background: linear-gradient(135deg, #2f5383, #1e3a5f); color: #fff; font-weight: 800; font-size: 16px;
+box-shadow: 0 4px 12px rgba(30, 58, 95, .35);
+}
+.brand-name { font-weight: 700; font-size: 1rem; }
+.brand-tag { color: var(--muted); font-size: .82rem; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.spacer { flex: 1; }
+.pill {
+font-size: .75rem; font-weight: 600; color: var(--accent); background: var(--accent-soft);
+padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+}
+/* layout */
+.layout { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; gap: 20px; }
+.col-left, .col-right { display: grid; gap: 20px; align-content: start; min-width: 0; }
+@media (min-width: 980px) {
+.layout { grid-template-columns: 380px minmax(0, 1fr); align-items: start; }
+.col-left { position: sticky; top: 76px; max-height: calc(100vh - 96px); overflow: auto; padding-right: 4px; }
+}
+/* cards */
+.card {
+background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+box-shadow: var(--shadow); padding: 18px;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.card h2 { font-size: 1rem; font-weight: 650; }
+.card-sub { color: var(--muted); font-size: .85rem; margin: 4px 0 0; }
+/* notice */
+.notice {
+background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+color: var(--text); border-radius: 12px; padding: 12px 14px; font-size: .9rem;
+}
+.notice strong { font-weight: 700; }
+/* form controls */
+form { margin: 0; }
+.form { display: grid; gap: 14px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > label, legend { font-size: .82rem; font-weight: 600; color: var(--text); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+input[type=text], input[type=number], input[type=password], select, textarea {
+width: 100%; height: 40px; padding: 0 12px; font: inherit; color: var(--text);
+background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+transition: border-color .15s, box-shadow .15s;
+}
+textarea { height: auto; min-height: 84px; padding: 10px 12px; resize: vertical; }
+input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus); }
+select { appearance: auto; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 8px; }
+.hint { color: var(--muted); font-size: .8rem; margin: 0; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* query box wraps long searches onto new lines */
+#q { height: auto; min-height: 44px; padding: 9px 12px; line-height: 1.45; resize: vertical;
+white-space: pre-wrap; overflow-wrap: anywhere; }
+/* chips for article types */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+position: relative; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: .84rem; color: var(--text);
+background: var(--surface); transition: all .15s;
+}
+.chip:hover { border-color: var(--accent); }
+.chip input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.chip:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.chip:has(input:focus-visible) { box-shadow: var(--focus); }
+/* buttons */
+button {
+font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; height: 38px; padding: 0 14px;
+border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text);
+transition: background .15s, border-color .15s, color .15s; white-space: nowrap;
+}
+button:hover { background: var(--surface-2); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+button.secondary { color: var(--text); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions .primary { flex: 1 1 auto; }
+/* settings */
+.settings { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+.settings > summary { cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--muted); list-style: none; }
+.settings > summary::-webkit-details-marker { display: none; }
+.settings > summary::after { content: "+"; float: right; color: var(--muted); }
+.settings[open] > summary::after { content: "\2212"; }
+.settings .form { margin-top: 12px; }
+.check-row { display: flex; align-items: center; gap: 8px; font-size: .88rem; }
+.check-row input { width: 16px; height: 16px; accent-color: var(--accent); }
+/* AI chat */
+.chat { display: grid; gap: 10px; margin: 12px 0; max-height: 360px; overflow: auto; padding-right: 2px; }
+.chat:empty { display: none; }
+.msg { font-size: .92rem; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line); background: var(--surface); }
+.msg p { margin: 0; white-space: pre-wrap; }
+.msg .who { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; opacity: .8; }
+.msg.user { background: var(--accent); border-color: var(--accent); color: #fff; justify-self: end; max-width: 88%; }
+.msg.user .who { opacity: .85; }
+.msg.assistant { justify-self: start; max-width: 100%; background: var(--surface-2); border-left: 3px solid var(--accent); }
+.msg.err { background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 40%, transparent); color: var(--danger); }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.btns button { height: 32px; font-size: .82rem; padding: 0 12px; }
+pre.q {
+background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+margin: 8px 0 0; white-space: pre-wrap; word-break: break-word;
+font: .84rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.checkout, .check {
+background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+padding: 10px 12px; margin-top: 8px; font-size: .88rem;
+}
+.checkout ul, .check ul { margin: 6px 0; padding-left: 18px; }
+.checkout p, .check p { margin: 0; }
+.ok { color: var(--ok); }
+.bad { color: var(--danger); }
+.checkout pre, .check pre { white-space: pre-wrap; word-break: break-word; font-size: .8rem; margin: 6px 0 0; }
+.check summary, .checkout summary { cursor: pointer; color: var(--accent); margin-top: 6px; }
+/* results */
+.results-head { display: grid; gap: 10px; margin-bottom: 12px; }
+#status { color: var(--muted); font-size: .9rem; min-height: 1.4em; }
+#status.error { color: var(--danger); }
+.toolbar { display: none; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar.on { display: flex; }
+.toolbar .grow { flex: 1 1 auto; color: var(--muted); font-size: .88rem; }
+ol#results { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+li.result {
+display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; padding: 16px;
+background: var(--surface); border: 1px solid var(--line); border-radius: 12px; transition: border-color .15s;
+}
+li.result:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+li.result input[type=checkbox] { margin-top: 5px; width: 17px; height: 17px; accent-color: var(--accent); }
+.title { font-size: 1rem; font-weight: 650; line-height: 1.35; margin: 0 0 4px; }
+.title a { color: var(--text); text-decoration: none; }
+.title a:hover { color: var(--accent); text-decoration: underline; }
+.meta { color: var(--muted); font-size: .88rem; margin: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag {
+font-size: .74rem; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+background: var(--accent-soft); color: var(--accent);
+}
+details { margin-top: 8px; }
+details summary { cursor: pointer; color: var(--accent); font-size: .86rem; font-weight: 600; }
+.abs { font-size: .9rem; margin: 8px 0 0; white-space: pre-wrap; color: var(--text); }
+.abs b { font-weight: 650; }
+.links { font-size: .82rem; color: var(--muted); margin-top: 8px; }
+.links a { font-weight: 600; }
+.empty {
+text-align: center; color: var(--muted); padding: 36px 12px; border: 1px dashed var(--line); border-radius: 12px; font-size: .92rem;
+}
+footer { color: var(--muted); font-size: .8rem; line-height: 1.6; padding: 0 4px 24px; }
+footer p { margin: 0 0 4px; }
+/* welcome dialog */
+dialog.welcome {
+border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--text);
+box-shadow: 0 20px 50px rgba(15, 23, 42, .25); padding: 24px; max-width: min(440px, calc(100vw - 32px));
+}
+dialog.welcome::backdrop { background: rgba(15, 23, 42, .45); }
+dialog.welcome h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+dialog.welcome p { margin: 0 0 16px; color: var(--muted); font-size: .95rem; }
+dialog.welcome .actions { justify-content: flex-end; }
+@media (max-width: 520px) {
+.layout { padding: 14px; gap: 14px; }
+.card { padding: 14px; }
+.grid2 { grid-template-columns: 1fr; }
+.brand-tag { display: none; }
+.pill { display: none; }
+.topbar-inner { padding: 10px 14px; }
+}
 </style>
 </head>
 <body>
 <dialog class="welcome" id="welcome" aria-labelledby="welcomeTitle">
-  <h2 id="welcomeTitle">Welcome to MiniResearch</h2>
-  <p>Personal web app for building a PubMed reading list. Search PubMed, pick the articles you want, and export them for EndNote, Zotero, or a spreadsheet.</p>
-  <div class="actions"><button class="primary" id="welcomeOk" type="button">Get started</button></div>
+<h2 id="welcomeTitle">Welcome to MiniResearch</h2>
+<p>Personal web app for building a PubMed reading list. Search PubMed, pick the articles you want, and export them for EndNote, Zotero, or a spreadsheet.</p>
+<div class="actions"><button class="primary" id="welcomeOk" type="button">Get started</button></div>
 </dialog>
 <header class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <span class="logo" aria-hidden="true">M</span>
-      <div>
-        <div class="brand-name">MiniResearch</div>
-        <div class="brand-tag">PubMed reading list builder, fast</div>
-      </div>
-    </div>
-    <div class="spacer"></div>
-    <span class="pill">Free NCBI PubMed data</span>
-  </div>
+<div class="topbar-inner">
+<div class="brand">
+<span class="logo" aria-hidden="true">M</span>
+<div>
+<div class="brand-name">MiniResearch</div>
+<div class="brand-tag">Personal PubMed reading list builder</div>
+</div>
+</div>
+<div class="spacer"></div>
+<span class="pill">Free NCBI PubMed data</span>
+</div>
 </header>
-
 <main class="layout">
-  <aside class="col-left" aria-label="Search and AI helper">
-    <section class="card" aria-labelledby="helperTitle">
-      <div class="card-head">
-        <h2 id="helperTitle">AI query helper</h2>
-        <span class="pill">Gemini or Claude</span>
-      </div>
-      <p class="card-sub">Describe your topic in plain language. The helper suggests a PubMed query, runs it against PubMed. Review every query before relying on it.</p>
-      <div id="chat" class="chat" aria-live="polite"></div>
-      <form id="chatForm" class="form" autocomplete="off">
-        <label for="chatIn" class="sr">Describe your research topic</label>
-        <textarea id="chatIn" rows="3" maxlength="1500"
-          placeholder="e.g. Do anxiety or depression increase the chance that adults with jaw joint disorders need surgery?"></textarea>
-        <div class="actions">
-          <button class="primary" id="chatSend" type="submit">Suggest query</button>
-          <button class="secondary" id="chatClear" type="button">New chat</button>
-        </div>
-      </form>
-
-      <details class="settings" id="aiSettings">
-        <summary>AI settings and your API key</summary>
-        <div class="form">
-          <div class="grid2">
-            <div class="field"><label for="provider">AI model</label>
-              <select id="provider">
-                <option value="gemini">Google Gemini (free tier available)</option>
-                <option value="claude">Anthropic Claude (paid)</option>
-              </select></div>
-            <div class="field"><label for="model">Model name</label>
-              <input id="model" type="text" spellcheck="false"></div>
-          </div>
-          <div class="field"><label for="apiKey" id="keyLabel">Google Gemini API key</label>
-            <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza..."></div>
-          <p class="hint" id="keyHelp"></p>
-          <label class="check-row"><input type="checkbox" id="remember"> Remember API key on this device</label>
-          <p class="hint">Your key stays in this browser. Free tiers may let the model use submitted text to improve its products, so check the provider's current terms. Do not remember your key on a shared computer.</p>
-        </div>
-      </details>
-    </section>
-
-    <section class="card" aria-labelledby="searchTitle">
-      <div class="card-head"><h2 id="searchTitle">Search PubMed</h2></div>
-      <form id="searchForm" class="form" autocomplete="off">
-        <div class="field">
-          <label for="q">Query</label>
-          <textarea id="q" rows="2" required spellcheck="false"
-                 placeholder='e.g. "Temporomandibular Joint Disorders"[MeSH] AND (anxiety OR depression)'></textarea>
-          <p class="hint">PubMed syntax works: MeSH terms, [tiab] fields, AND / OR / NOT, quotes.</p>
-        </div>
-
-        <div class="grid2">
-          <div class="field"><label for="from">From year</label><input id="from" type="number" min="1900" max="2100" placeholder="2015"></div>
-          <div class="field"><label for="to">To year</label><input id="to" type="number" min="1900" max="2100" placeholder="2026"></div>
-        </div>
-
-        <div class="grid2">
-          <div class="field">
-            <label for="sort">Sort by</label>
-            <select id="sort">
-              <option value="relevance">Best match</option>
-              <option value="pub_date">Most recent</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="max">Max results</label>
-            <select id="max"><option>20</option><option selected>50</option><option>100</option></select>
-          </div>
-        </div>
-
-        <fieldset>
-          <legend>Article type</legend>
-          <div class="chips" id="types">
-            <label class="chip"><input type="checkbox" value="Systematic Review[pt]">Systematic review</label>
-            <label class="chip"><input type="checkbox" value="Meta-Analysis[pt]">Meta-analysis</label>
-            <label class="chip"><input type="checkbox" value="Review[pt]">Review</label>
-            <label class="chip"><input type="checkbox" value="Randomized Controlled Trial[pt]">Randomized trial</label>
-            <label class="chip"><input type="checkbox" value="Clinical Trial[pt]">Clinical trial</label>
-            <label class="chip"><input type="checkbox" value="Case Reports[pt]">Case report</label>
-          </div>
-        </fieldset>
-
-        <div class="actions">
-          <button class="primary" id="go" type="submit">Search PubMed</button>
-          <button class="secondary" id="chk" type="button">Check query</button>
-        </div>
-      </form>
-      <div id="checkOut" class="checkout" hidden aria-live="polite"></div>
-    </section>
-  </aside>
-
-  <section class="col-right" aria-label="Results">
-    <div class="notice" role="note">
-      <strong>This web app runs on NCBI PubMed database.</strong> Verify every citation against the publisher or PubMed.
-    </div>
-
-    <section class="card" aria-labelledby="resultsTitle">
-      <div class="results-head">
-        <div class="card-head" style="margin-bottom:0">
-          <h2 id="resultsTitle">Results</h2>
-        </div>
-        <div id="status" role="status" aria-live="polite"></div>
-        <div class="toolbar" id="toolbar">
-          <span class="grow" id="count"></span>
-          <button type="button" class="secondary" id="selAll">Select all</button>
-          <button type="button" class="secondary" id="selNone">Clear</button>
-          <button type="button" class="secondary" id="dlRis">Export RIS</button>
-          <button type="button" class="secondary" id="dlCsv">Export CSV</button>
-          <button type="button" class="secondary" id="copyCit">Copy citations</button>
-        </div>
-      </div>
-      <ol id="results"></ol>
-    </section>
-
-    <footer>
-      <p>Data from NCBI PubMed via the public E-utilities API. Not affiliated with or endorsed by NCBI or the U.S. National Library of Medicine.</p>
-      <p>MIT License. Copyright (c) 2026 Nicole Cheng.</p>
-    </footer>
-  </section>
+<aside class="col-left" aria-label="Search and AI helper">
+<section class="card" aria-labelledby="helperTitle">
+<div class="card-head">
+<h2 id="helperTitle">AI query helper</h2>
+<span class="pill">Gemini or Claude</span>
+</div>
+<p class="card-sub">Describe your topic in plain language. The helper suggests a PubMed query, runs it against PubMed. Review every query before relying on it.</p>
+<div id="chat" class="chat" aria-live="polite"></div>
+<form id="chatForm" class="form" autocomplete="off">
+<label for="chatIn" class="sr">Describe your research topic</label>
+<textarea id="chatIn" rows="3" maxlength="1500"
+placeholder="e.g. Do anxiety or depression increase the chance that adults with jaw joint disorders need surgery?"></textarea>
+<div class="actions">
+<button class="primary" id="chatSend" type="submit">Send</button>
+<button class="secondary" id="chatClear" type="button">New chat</button>
+</div>
+</form>
+<details class="settings" id="aiSettings">
+<summary>AI settings and your API key</summary>
+<div class="form">
+<div class="grid2">
+<div class="field"><label for="provider">AI model</label>
+<select id="provider">
+<option value="gemini">Google Gemini (free tier available)</option>
+<option value="claude">Anthropic Claude (paid)</option>
+</select></div>
+<div class="field"><label for="model">Model name</label>
+<input id="model" type="text" spellcheck="false"></div>
+</div>
+<div class="field"><label for="apiKey" id="keyLabel">Google Gemini API key</label>
+<input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza..."></div>
+<p class="hint" id="keyHelp"></p>
+<label class="check-row"><input type="checkbox" id="remember"> Remember API key on this device</label>
+<p class="hint">Your key stays in this browser. Free tiers may let the model use submitted text to improve its products, so check the provider's current terms. Do not remember your key on a shared computer.</p>
+</div>
+</details>
+</section>
+<section class="card" aria-labelledby="searchTitle">
+<div class="card-head"><h2 id="searchTitle">Search PubMed</h2></div>
+<form id="searchForm" class="form" autocomplete="off">
+<div class="field">
+<label for="q">Query</label>
+<textarea id="q" rows="2" required spellcheck="false"
+placeholder='e.g. "Temporomandibular Joint Disorders"[MeSH] AND (anxiety OR depression)'></textarea>
+<p class="hint">PubMed syntax works: MeSH terms, [tiab] fields, AND / OR / NOT, quotes.</p>
+</div>
+<div class="grid2">
+<div class="field"><label for="from">From year</label><input id="from" type="number" min="1900" max="2100" placeholder="2015"></div>
+<div class="field"><label for="to">To year</label><input id="to" type="number" min="1900" max="2100" placeholder="2026"></div>
+</div>
+<div class="grid2">
+<div class="field">
+<label for="sort">Sort by</label>
+<select id="sort">
+<option value="relevance">Best match</option>
+<option value="pub_date">Most recent</option>
+</select>
+</div>
+<div class="field">
+<label for="max">Max results</label>
+<select id="max"><option>20</option><option selected>50</option><option>100</option></select>
+</div>
+</div>
+<fieldset>
+<legend>Article type</legend>
+<div class="chips" id="types">
+<label class="chip"><input type="checkbox" value="Systematic Review[pt]">Systematic review</label>
+<label class="chip"><input type="checkbox" value="Meta-Analysis[pt]">Meta-analysis</label>
+<label class="chip"><input type="checkbox" value="Review[pt]">Review</label>
+<label class="chip"><input type="checkbox" value="Randomized Controlled Trial[pt]">Randomized trial</label>
+<label class="chip"><input type="checkbox" value="Clinical Trial[pt]">Clinical trial</label>
+<label class="chip"><input type="checkbox" value="Case Reports[pt]">Case report</label>
+</div>
+</fieldset>
+<div class="actions">
+<button class="primary" id="go" type="submit">Search PubMed</button>
+<button class="secondary" id="chk" type="button">Check query</button>
+</div>
+</form>
+<div id="checkOut" class="checkout" hidden aria-live="polite"></div>
+</section>
+</aside>
+<section class="col-right" aria-label="Results">
+<div class="notice" role="note">
+<strong>This web app runs on NCBI PubMed database.</strong> Verify every citation against the publisher or PubMed.
+</div>
+<section class="card" aria-labelledby="resultsTitle">
+<div class="results-head">
+<div class="card-head" style="margin-bottom:0">
+<h2 id="resultsTitle">Results</h2>
+</div>
+<div id="status" role="status" aria-live="polite"></div>
+<div class="toolbar" id="toolbar">
+<span class="grow" id="count"></span>
+<button type="button" class="secondary" id="selAll">Select all</button>
+<button type="button" class="secondary" id="selNone">Clear</button>
+<button type="button" class="secondary" id="dlRis">Export RIS</button>
+<button type="button" class="secondary" id="dlCsv">Export CSV</button>
+<button type="button" class="secondary" id="copyCit">Copy citations</button>
+</div>
+</div>
+<ol id="results"></ol>
+</section>
+<footer>
+<p>Data from NCBI PubMed via the public E-utilities API. Not affiliated with or endorsed by NCBI or the U.S. National Library of Medicine.</p>
+<p>MIT License. Copyright (c) 2026 Nicole Cheng.</p>
+</footer>
+</section>
 </main>
-
 <script>
 (() => {
-  "use strict";
-  const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
-  const TOOL = "pubmed_reading_list_builder";
-  const $ = (id) => document.getElementById(id);
-  const form = $("searchForm"), statusEl = $("status"), list = $("results"),
-        toolbar = $("toolbar"), countEl = $("count"), goBtn = $("go");
-  let articles = [];
-
-  const setStatus = (msg, isErr = false) => {
-    statusEl.textContent = msg; statusEl.className = isErr ? "error" : "";
-  };
-
-  async function getJSON(url) {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(r.status === 429
-      ? "PubMed is rate limiting requests. Wait a few seconds and try again."
-      : `PubMed returned an error (HTTP ${r.status}).`);
-    return r.json();
-  }
-
-  function buildTerm() {
-    let term = $("q").value.trim();
-    const types = [...document.querySelectorAll("#types input:checked")].map(c => c.value);
-    if (types.length) term = `(${term}) AND (${types.join(" OR ")})`;
-    const from = $("from").value.trim(), to = $("to").value.trim();
-    if (from || to) term += ` AND ("${from || 1900}"[dp] : "${to || 3000}"[dp])`;
-    return term;
-  }
-
-  async function search(e) {
-    e.preventDefault();
-    const term = buildTerm();
-    goBtn.disabled = true; list.innerHTML = ""; toolbar.classList.remove("on");
-    articles = [];
-    try {
-      setStatus("Searching PubMed...");
-      const params = new URLSearchParams({
-        db: "pubmed", term, retmode: "json", retmax: $("max").value,
-        sort: $("sort").value, tool: TOOL
-      });
-      const s = await getJSON(EUTILS + "esearch.fcgi?" + params);
-      const res = s.esearchresult || {};
-      if (res.ERROR || (res.errorlist && res.errorlist.phrasesnotfound && !res.idlist.length)) {
-        throw new Error("PubMed could not understand that query. Check the syntax and try again.");
-      }
-      const ids = res.idlist || [];
-      const total = parseInt(res.count || "0", 10);
-      if (!ids.length) { setStatus("No results. Try broader terms or fewer filters."); return; }
-
-      setStatus(`Found ${total.toLocaleString()} articles. Loading the top ${ids.length}...`);
-      const r = await fetch(EUTILS + "efetch.fcgi?" + new URLSearchParams({
-        db: "pubmed", id: ids.join(","), retmode: "xml", tool: TOOL }));
-      if (!r.ok) throw new Error(`PubMed returned an error (HTTP ${r.status}).`);
-      const xml = new DOMParser().parseFromString(await r.text(), "text/xml");
-      articles = parseArticles(xml);
-      render();
-      setStatus(total > ids.length
-        ? `Showing ${ids.length} of ${total.toLocaleString()} matches. Narrow your query to see others.`
-        : `Showing all ${ids.length} matches.`);
-    } catch (err) {
-      const offline = err instanceof TypeError;
-      setStatus(offline ? "Could not reach PubMed. Check your connection and try again." : err.message, true);
-    } finally { goBtn.disabled = false; }
-  }
-
-  const txt = (node, sel) => { const n = node.querySelector(sel); return n ? n.textContent.trim() : ""; };
-
-  function parseArticles(xml) {
-    return [...xml.querySelectorAll("PubmedArticle")].map((a) => {
-      const pmid = txt(a, "MedlineCitation > PMID");
-      const authors = [...a.querySelectorAll("AuthorList > Author")].map((au) => {
-        const last = txt(au, "LastName"), fore = txt(au, "ForeName") || txt(au, "Initials");
-        return last ? { last, fore } : { last: txt(au, "CollectiveName"), fore: "" };
-      }).filter(x => x.last);
-      const abstract = [...a.querySelectorAll("Abstract > AbstractText")].map((t) => ({
-        label: t.getAttribute("Label") || "", text: t.textContent.trim() }));
-      const doiNode = [...a.querySelectorAll("ArticleIdList > ArticleId")].find(i => i.getAttribute("IdType") === "doi");
-      let year = txt(a, "Journal > JournalIssue > PubDate > Year");
-      if (!year) { const m = txt(a, "Journal > JournalIssue > PubDate > MedlineDate").match(/\d{4}/); year = m ? m[0] : ""; }
-      return {
-        pmid,
-        title: txt(a, "ArticleTitle").replace(/\.$/, ""),
-        authors, abstract, year,
-        journal: txt(a, "Journal > Title"),
-        volume: txt(a, "Journal > JournalIssue > Volume"),
-        issue: txt(a, "Journal > JournalIssue > Issue"),
-        pages: txt(a, "Pagination > MedlinePgn"),
-        doi: doiNode ? doiNode.textContent.trim() : "",
-        types: [...a.querySelectorAll("PublicationTypeList > PublicationType")].map(t => t.textContent.trim())
-      };
-    });
-  }
-
-  const authorLine = (au) => {
-    if (!au.length) return "No authors listed";
-    const names = au.slice(0, 6).map(x => x.fore ? `${x.last} ${x.fore}` : x.last);
-    return names.join(", ") + (au.length > 6 ? ", et al." : "");
-  };
-
-  function render() {
-    list.innerHTML = "";
-    articles.forEach((a, i) => {
-      const li = document.createElement("li"); li.className = "result";
-      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = true;
-      cb.dataset.i = i; cb.setAttribute("aria-label", `Select article ${i + 1}`);
-      const body = document.createElement("div");
-
-      const h = document.createElement("h3"); h.className = "title";
-      const link = document.createElement("a");
-      link.href = `https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(a.pmid)}/`;
-      link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = a.title || "(untitled)";
-      h.appendChild(link);
-
-      const meta = document.createElement("p"); meta.className = "meta";
-      meta.textContent = `${authorLine(a.authors)}. ${a.journal}${a.year ? ", " + a.year : ""}.`;
-
-      body.append(h, meta);
-
-      const keep = a.types.filter(t => !/^(Journal Article|Research Support.*)$/.test(t)).slice(0, 4);
-      if (keep.length) {
-        const tags = document.createElement("div"); tags.className = "tags";
-        keep.forEach(t => { const s = document.createElement("span"); s.className = "tag"; s.textContent = t; tags.appendChild(s); });
-        body.appendChild(tags);
-      }
-      if (a.abstract.length) {
-        const d = document.createElement("details");
-        const sm = document.createElement("summary"); sm.textContent = "Abstract"; d.appendChild(sm);
-        const p = document.createElement("p"); p.className = "abs";
-        a.abstract.forEach((seg, k) => {
-          if (seg.label) { const b = document.createElement("b"); b.textContent = seg.label + ": "; p.appendChild(b); }
-          p.appendChild(document.createTextNode(seg.text + (k < a.abstract.length - 1 ? "\n\n" : "")));
-        });
-        d.appendChild(p); body.appendChild(d);
-      }
-      const links = document.createElement("div"); links.className = "links";
-      links.appendChild(document.createTextNode(`PMID ${a.pmid}`));
-      if (a.doi) {
-        links.appendChild(document.createTextNode(" · "));
-        const dl = document.createElement("a");
-        dl.href = "https://doi.org/" + a.doi.split("/").map(encodeURIComponent).join("/");
-        dl.target = "_blank"; dl.rel = "noopener noreferrer"; dl.textContent = "DOI " + a.doi;
-        links.appendChild(dl);
-      }
-      body.appendChild(links);
-      li.append(cb, body); list.appendChild(li);
-    });
-    toolbar.classList.add("on"); updateCount();
-  }
-
-  const selected = () => [...list.querySelectorAll("input[type=checkbox]:checked")].map(c => articles[+c.dataset.i]);
-  const updateCount = () => { countEl.textContent = `${selected().length} of ${articles.length} selected`; };
-  list.addEventListener("change", updateCount);
-  $("selAll").onclick = () => { list.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = true); updateCount(); };
-  $("selNone").onclick = () => { list.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = false); updateCount(); };
-
-  function download(name, text, mime) {
-    const url = URL.createObjectURL(new Blob([text], { type: mime }));
-    const a = document.createElement("a"); a.href = url; a.download = name;
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-  const needSel = () => { const s = selected(); if (!s.length) setStatus("Select at least one article first.", true); return s; };
-
-  function toRIS(items) {
-    return items.map((a) => {
-      const L = ["TY  - JOUR", `TI  - ${a.title}`];
-      a.authors.forEach(x => L.push(`AU  - ${x.fore ? x.last + ", " + x.fore : x.last}`));
-      if (a.journal) L.push(`JO  - ${a.journal}`);
-      if (a.year) L.push(`PY  - ${a.year}`);
-      if (a.volume) L.push(`VL  - ${a.volume}`);
-      if (a.issue) L.push(`IS  - ${a.issue}`);
-      if (a.pages) { const [sp, ep] = a.pages.split("-"); L.push(`SP  - ${sp}`); if (ep) L.push(`EP  - ${ep}`); }
-      if (a.doi) L.push(`DO  - ${a.doi}`);
-      const ab = a.abstract.map(s => (s.label ? s.label + ": " : "") + s.text).join(" ");
-      if (ab) L.push(`AB  - ${ab}`);
-      L.push(`UR  - https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`, `AN  - ${a.pmid}`, "ER  - ");
-      return L.join("\r\n");
-    }).join("\r\n\r\n") + "\r\n";
-  }
-  const csvCell = (v) => {
-    let s = String(v ?? "");
-    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   // neutralize spreadsheet formulas
-    return `"${s.replace(/"/g, '""')}"`;
-  };
-  function toCSV(items) {
-    const head = ["PMID", "Title", "Authors", "Journal", "Year", "Volume", "Issue", "Pages", "DOI", "Types", "URL", "Abstract"];
-    const rows = items.map(a => [a.pmid, a.title, a.authors.map(x => x.fore ? `${x.last} ${x.fore}` : x.last).join("; "),
-      a.journal, a.year, a.volume, a.issue, a.pages, a.doi, a.types.join("; "),
-      `https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`, a.abstract.map(s => (s.label ? s.label + ": " : "") + s.text).join(" ")]);
-    return "﻿" + [head, ...rows].map(r => r.map(csvCell).join(",")).join("\r\n");
-  }
-  const citation = (a) => `${authorLine(a.authors)}. ${a.title}. ${a.journal}. ${a.year}` +
-    `${a.volume ? ";" + a.volume : ""}${a.issue ? "(" + a.issue + ")" : ""}${a.pages ? ":" + a.pages : ""}.` +
-    `${a.doi ? " doi:" + a.doi : ""} PMID: ${a.pmid}`;
-
-  $("dlRis").onclick = () => { const s = needSel(); if (s.length) download("reading_list.ris", toRIS(s), "application/x-research-info-systems"); };
-  $("dlCsv").onclick = () => { const s = needSel(); if (s.length) download("reading_list.csv", toCSV(s), "text/csv;charset=utf-8"); };
-  $("copyCit").onclick = async () => {
-    const s = needSel(); if (!s.length) return;
-    const text = s.map((a, i) => `${i + 1}. ${citation(a)}`).join("\n");
-    try { await navigator.clipboard.writeText(text); setStatus(`Copied ${s.length} citations.`); }
-    catch { setStatus("Copy was blocked by the browser. Use Export RIS or CSV instead.", true); }
-  };
-
-  form.addEventListener("submit", search);
-
-  /* ---------- Query checking (PubMed only, no key needed) ---------- */
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const MESH_RE = [/"([^"]+?)"\s*\[(?:MeSH Terms|MeSH|mh)(?::noexp)?\]/gi,
-                   /(?:^|[\s(])([A-Za-z][A-Za-z\-]*)\s*\[(?:MeSH Terms|MeSH|mh)(?::noexp)?\]/gi];
-  function meshNames(term) {
-    const out = new Set();
-    MESH_RE.forEach(re => { re.lastIndex = 0; let m; while ((m = re.exec(term)) && out.size < 12) out.add(m[1].trim()); });
-    return [...out];
-  }
-  async function checkQuery(term) {
-    const j = await getJSON(EUTILS + "esearch.fcgi?" + new URLSearchParams({
-      db: "pubmed", term, retmode: "json", retmax: "0", tool: TOOL }));
-    const r = j.esearchresult || {};
-    const notes = [];
-    if (r.ERROR) notes.push("PubMed could not parse this query: " + r.ERROR);
-    const el = r.errorlist || {}, wl = r.warninglist || {};
-    (el.phrasesnotfound || []).forEach(p => notes.push(`Phrase not found in PubMed: ${p}`));
-    (el.fieldsnotfound || []).forEach(p => notes.push(`Unknown field tag: ${p}`));
-    (wl.quotedphrasesnotfound || []).forEach(p => notes.push(`Quoted phrase not found: ${p}`));
-    (wl.phrasesignored || []).forEach(p => notes.push(`Ignored by PubMed: ${p}`));
-    (wl.outputmessages || []).forEach(p => notes.push(p));
-    const mesh = [];
-    for (const name of meshNames(term)) {
-      await sleep(350);   // stay under NCBI's 3 requests/second
-      const m = await getJSON(EUTILS + "esearch.fcgi?" + new URLSearchParams({
-        db: "mesh", term: `"${name}"[MeSH Terms]`, retmode: "json", retmax: "0", tool: TOOL }));
-      mesh.push({ name, ok: parseInt((m.esearchresult || {}).count || "0", 10) > 0 });
-    }
-    return { count: parseInt(r.count || "0", 10), translation: r.querytranslation || "", notes, mesh, hadError: !!r.ERROR };
-  }
-  function showCheck(box, d) {
-    box.replaceChildren();
-    const p = document.createElement("p"); p.style.margin = "0";
-    p.textContent = d.hadError ? "This query has a problem." : `PubMed reports ${d.count.toLocaleString()} results for this query.`;
-    if (!d.hadError && d.count === 0) p.textContent += " Try broader terms.";
-    if (!d.hadError && d.count > 5000) p.textContent += " That's a lot. Consider narrowing it.";
-    box.appendChild(p);
-    if (d.mesh.length) {
-      const ul = document.createElement("ul");
-      d.mesh.forEach(m => {
-        const li = document.createElement("li"); li.className = m.ok ? "ok" : "bad";
-        li.textContent = m.ok ? `MeSH term found: ${m.name}` : `MeSH term not found: ${m.name} (check spelling or replace it)`;
-        ul.appendChild(li);
-      });
-      box.appendChild(ul);
-      const h = document.createElement("p"); h.className = "hint"; h.style.margin = "0";
-      h.textContent = "MeSH check looks the name up in NLM's MeSH database. It can also match entry terms, so confirm the exact heading in the MeSH Browser.";
-      box.appendChild(h);
-    }
-    if (d.notes.length) {
-      const ul = document.createElement("ul");
-      d.notes.forEach(n => { const li = document.createElement("li"); li.className = "bad"; li.textContent = n; ul.appendChild(li); });
-      box.appendChild(ul);
-    }
-    if (d.translation) {
-      const det = document.createElement("details"); const sm = document.createElement("summary");
-      sm.textContent = "How PubMed interpreted it"; det.appendChild(sm);
-      const pre = document.createElement("pre"); pre.textContent = d.translation; det.appendChild(pre); box.appendChild(det);
-    }
-    box.hidden = false;
-  }
-  async function runCheck(term, box) {
-    box.hidden = false; box.textContent = "Checking against PubMed...";
-    try { showCheck(box, await checkQuery(term)); }
-    catch (err) { box.textContent = err instanceof TypeError ? "Could not reach PubMed to check the query." : err.message; }
-  }
-  $("chk").onclick = async () => {
-    const t = $("q").value.trim();
-    if (!t) { setStatus("Type or paste a query first.", true); return; }
-    $("chk").disabled = true; await runCheck(buildTerm(), $("checkOut")); $("chk").disabled = false;
-  };
-
-  /* ---------- AI query helper (calls the chosen model with the user's own key) ---------- */
-  const SYSTEM = [
-    "You are an expert medical librarian who writes PubMed search strategies.",
-    "Given a research topic, write ONE PubMed query.",
-    "Rules: split the topic into concepts. Join concepts with AND and synonyms inside a concept with OR.",
-    "For each concept, pair a MeSH heading, written \"Heading Name\"[MeSH Terms], with free-text synonyms using \"phrase\"[tiab].",
-    "Use quotes for phrases and * truncation sparingly. Wrap each OR group in parentheses.",
-    "Only use MeSH headings you are confident exist; the page verifies them. Do not claim you verified anything.",
-    "Do not add date or article-type filters unless asked, because the page has filters for those.",
-    "Reply with 1 to 3 short sentences explaining the strategy, then the final query alone in a fenced code block tagged pubmed.",
-    "If the request is too vague, ask one short clarifying question and include no code block.",
-    "Never request patient data. If the user includes personal health information, tell them to remove it and do not repeat it.",
-    "Keep the query under 1500 characters."
-  ].join(" ");
-  const store = {
-    get(k) { try { return localStorage.getItem(k) || sessionStorage.getItem(k) || ""; } catch { return ""; } },
-    set(k, v, persist) { try { sessionStorage.removeItem(k); localStorage.removeItem(k);
-      (persist ? localStorage : sessionStorage).setItem(k, v); } catch { /* storage unavailable */ } },
-    clear(k) { try { sessionStorage.removeItem(k); localStorage.removeItem(k); } catch { } }
-  };
-  const PROVIDERS = {
-    gemini: { label: "Google Gemini API key", ph: "AIza...", model: "gemini-3.5-flash-lite",
-              help: "Get a free key at aistudio.google.com. Free-tier limits are small and per model, so if you hit a limit, try a different model name." },
-    claude: { label: "Anthropic API key", ph: "sk-ant-...", model: "claude-haiku-5-5",
-              help: "Anthropic API usage is billed to your key (console.anthropic.com)." }
-  };
-  let provider = store.get("pm_provider"); if (!PROVIDERS[provider]) provider = "gemini";
-  const persisted = (k) => { try { return !!localStorage.getItem(k); } catch { return false; } };
-  function loadProvider() {
-    const P = PROVIDERS[provider];
-    $("provider").value = provider; $("keyLabel").textContent = P.label; $("apiKey").placeholder = P.ph;
-    $("keyHelp").textContent = P.help;
-    $("apiKey").value = store.get("pm_key_" + provider);
-    $("model").value = store.get("pm_model_" + provider) || P.model;
-    $("remember").checked = persisted("pm_key_" + provider);
-  }
-  const saveSettings = () => {
-    const k = $("apiKey").value.trim();
-    if (k) store.set("pm_key_" + provider, k, $("remember").checked); else store.clear("pm_key_" + provider);
-    store.set("pm_model_" + provider, $("model").value.trim(), true);
-    store.set("pm_provider", provider, true);
-  };
-  loadProvider();
-  $("apiKey").addEventListener("change", saveSettings);
-  $("remember").addEventListener("change", saveSettings);
-  $("model").addEventListener("change", saveSettings);
-  $("provider").addEventListener("change", () => {
-    saveSettings();                       // save the old provider's key and model first
-    provider = $("provider").value; store.set("pm_provider", provider, true); loadProvider();
-  });
-
-  const chat = $("chat"); let history = [], busy = false;
-  function addMsg(role, text, opts = {}) {
-    const d = document.createElement("div"); d.className = `msg ${role}${opts.err ? " err" : ""}`;
-    const body = text.replace(/```[\s\S]*?```/g, "").trim();
-    if (body) { const p = document.createElement("p"); p.textContent = body; d.appendChild(p); }
-    if (opts.query) {
-      const pre = document.createElement("pre"); pre.className = "q"; pre.textContent = opts.query; d.appendChild(pre);
-      const b = document.createElement("div"); b.className = "btns";
-      const use = document.createElement("button"); use.type = "button"; use.className = "secondary"; use.textContent = "Use in search box";
-      use.onclick = () => { $("q").value = opts.query; $("q").focus(); $("q").scrollIntoView({ block: "center" });
-        setStatus("Query copied into the search box. Click Search PubMed when ready."); };
-      const chk = document.createElement("button"); chk.type = "button"; chk.className = "secondary"; chk.textContent = "Check again";
-      const out = document.createElement("div"); out.className = "checkout"; out.hidden = true;
-      chk.onclick = () => runCheck(opts.query, out);
-      b.append(use, chk); d.append(b, out);
-      d._out = out;
-    }
-    chat.appendChild(d); return d;
-  }
-  async function askAI(text) {
-    const key = $("apiKey").value.trim(), model = $("model").value.trim() || PROVIDERS[provider].model;
-    const pname = provider === "gemini" ? "Google Gemini" : "Anthropic";
-    if (!key) { $("aiSettings").open = true; addMsg("assistant", `Add your ${pname} API key under AI settings to use the helper. You can still type a query yourself and use Check query.`, { err: true }); return; }
-    saveSettings();
-    history.push({ role: "user", content: text });
-    let msgs = history.slice(-10); while (msgs.length && msgs[0].role !== "user") msgs.shift();
-    let url, headers, body;
-    if (provider === "gemini") {
-      url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-      headers = { "content-type": "application/json", "x-goog-api-key": key };
-      body = { systemInstruction: { parts: [{ text: SYSTEM }] },
-               contents: msgs.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-               generationConfig: { maxOutputTokens: 2048, temperature: 0.3 } };
-    } else {
-      url = "https://api.anthropic.com/v1/messages";
-      headers = { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01",
-                  "anthropic-dangerous-direct-browser-access": "true" };
-      body = { model, max_tokens: 1200, system: SYSTEM, messages: msgs };
-    }
-    let r;
-    try { r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) }); }
-    catch { history.pop(); addMsg("assistant", `Could not reach ${pname}. Check your connection and try again.`, { err: true }); return; }
-    let data = {}; try { data = await r.json(); } catch { }
-    if (!r.ok) {
-      history.pop();
-      const em = (data.error && data.error.message) || "";
-      let why;
-      if (r.status === 429) why = provider === "gemini"
-        ? "Google says your free-tier quota for this model is used up (it can be a daily limit). Wait, or enter a different model name in AI settings."
-        : "Anthropic is rate limiting this key. Wait a moment and try again.";
-      else if (r.status === 401 || r.status === 403 || (r.status === 400 && /api key/i.test(em)))
-        why = `${pname} rejected the API key. Check that it is correct and enabled.`;
-      else if (r.status === 404) why = `${pname} could not find the model "${model}". Check the model name in AI settings.`;
-      else why = em ? `${pname} error: ${em}` : `${pname} returned an error (HTTP ${r.status}).`;
-      addMsg("assistant", why, { err: true }); return;
-    }
-    const reply = provider === "gemini"
-      ? ((((data.candidates || [])[0] || {}).content || {}).parts || []).map(p => p.text || "").join("")
-      : ((data.content || []).find(c => c.type === "text") || {}).text || "";
-    if (!reply) {
-      history.pop();
-      const blocked = data.promptFeedback && data.promptFeedback.blockReason;
-      addMsg("assistant", blocked ? "The provider blocked that request. Try rephrasing." : "The model returned an empty reply. Try rephrasing.", { err: true }); return;
-    }
-    history.push({ role: "assistant", content: reply });
-    const m = reply.match(/```(?:pubmed|text)?[ \t]*\r?\n([\s\S]*?)```/);
-    const query = m ? m[1].trim() : "";
-    const node = addMsg("assistant", reply, { query: query || undefined });
-    if (query) runCheck(query, node._out);
-  }
-  $("chatForm").addEventListener("submit", async (e) => {
-    e.preventDefault(); if (busy) return;
-    const t = $("chatIn").value.trim(); if (!t) return;
-    busy = true; $("chatSend").disabled = true; $("chatSend").textContent = "Thinking...";
-    addMsg("user", t); $("chatIn").value = "";
-    try { await askAI(t); } finally { busy = false; $("chatSend").disabled = false; $("chatSend").textContent = "Suggest query"; }
-  });
-  $("chatClear").onclick = () => { history = []; chat.replaceChildren(); };
+"use strict";
+const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
+const TOOL = "pubmed_reading_list_builder";
+const $ = (id) => document.getElementById(id);
+const form = $("searchForm"), statusEl = $("status"), list = $("results"),
+toolbar = $("toolbar"), countEl = $("count"), goBtn = $("go");
+let articles = [];
+const setStatus = (msg, isErr = false) => {
+statusEl.textContent = msg; statusEl.className = isErr ? "error" : "";
+};
+async function getJSON(url) {
+const r = await fetch(url);
+if (!r.ok) throw new Error(r.status === 429
+? "PubMed is rate limiting requests. Wait a few seconds and try again."
+: `PubMed returned an error (HTTP ${r.status}).`);
+return r.json();
+}
+function buildTerm() {
+let term = $("q").value.trim();
+const types = [...document.querySelectorAll("#types input:checked")].map(c => c.value);
+if (types.length) term = `(${term}) AND (${types.join(" OR ")})`;
+const from = $("from").value.trim(), to = $("to").value.trim();
+if (from || to) term += ` AND ("${from || 1900}"[dp] : "${to || 3000}"[dp])`;
+return term;
+}
+async function search(e) {
+e.preventDefault();
+const term = buildTerm();
+goBtn.disabled = true; list.innerHTML = ""; toolbar.classList.remove("on");
+articles = [];
+try {
+setStatus("Searching PubMed...");
+const params = new URLSearchParams({
+db: "pubmed", term, retmode: "json", retmax: $("max").value,
+sort: $("sort").value, tool: TOOL
+});
+const s = await getJSON(EUTILS + "esearch.fcgi?" + params);
+const res = s.esearchresult || {};
+if (res.ERROR || (res.errorlist && res.errorlist.phrasesnotfound && !res.idlist.length)) {
+throw new Error("PubMed could not understand that query. Check the syntax and try again.");
+}
+const ids = res.idlist || [];
+const total = parseInt(res.count || "0", 10);
+if (!ids.length) { setStatus("No results. Try broader terms or fewer filters."); return; }
+setStatus(`Found ${total.toLocaleString()} articles. Loading the top ${ids.length}...`);
+const r = await fetch(EUTILS + "efetch.fcgi?" + new URLSearchParams({
+db: "pubmed", id: ids.join(","), retmode: "xml", tool: TOOL }));
+if (!r.ok) throw new Error(`PubMed returned an error (HTTP ${r.status}).`);
+const xml = new DOMParser().parseFromString(await r.text(), "text/xml");
+articles = parseArticles(xml);
+render();
+setStatus(total > ids.length
+? `Showing ${ids.length} of ${total.toLocaleString()} matches. Narrow your query to see others.`
+: `Showing all ${ids.length} matches.`);
+} catch (err) {
+const offline = err instanceof TypeError;
+setStatus(offline ? "Could not reach PubMed. Check your connection and try again." : err.message, true);
+} finally { goBtn.disabled = false; }
+}
+const txt = (node, sel) => { const n = node.querySelector(sel); return n ? n.textContent.trim() : ""; };
+function parseArticles(xml) {
+return [...xml.querySelectorAll("PubmedArticle")].map((a) => {
+const pmid = txt(a, "MedlineCitation > PMID");
+const authors = [...a.querySelectorAll("AuthorList > Author")].map((au) => {
+const last = txt(au, "LastName"), fore = txt(au, "ForeName") || txt(au, "Initials");
+return last ? { last, fore } : { last: txt(au, "CollectiveName"), fore: "" };
+}).filter(x => x.last);
+const abstract = [...a.querySelectorAll("Abstract > AbstractText")].map((t) => ({
+label: t.getAttribute("Label") || "", text: t.textContent.trim() }));
+const doiNode = [...a.querySelectorAll("ArticleIdList > ArticleId")].find(i => i.getAttribute("IdType") === "doi");
+let year = txt(a, "Journal > JournalIssue > PubDate > Year");
+if (!year) { const m = txt(a, "Journal > JournalIssue > PubDate > MedlineDate").match(/\d{4}/); year = m ? m[0] : ""; }
+return {
+pmid,
+title: txt(a, "ArticleTitle").replace(/\.$/, ""),
+authors, abstract, year,
+journal: txt(a, "Journal > Title"),
+volume: txt(a, "Journal > JournalIssue > Volume"),
+issue: txt(a, "Journal > JournalIssue > Issue"),
+pages: txt(a, "Pagination > MedlinePgn"),
+doi: doiNode ? doiNode.textContent.trim() : "",
+types: [...a.querySelectorAll("PublicationTypeList > PublicationType")].map(t => t.textContent.trim())
+};
+});
+}
+const authorLine = (au) => {
+if (!au.length) return "No authors listed";
+const names = au.slice(0, 6).map(x => x.fore ? `${x.last} ${x.fore}` : x.last);
+return names.join(", ") + (au.length > 6 ? ", et al." : "");
+};
+function render() {
+list.innerHTML = "";
+articles.forEach((a, i) => {
+const li = document.createElement("li"); li.className = "result";
+const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = true;
+cb.dataset.i = i; cb.setAttribute("aria-label", `Select article ${i + 1}`);
+const body = document.createElement("div");
+const h = document.createElement("h3"); h.className = "title";
+const link = document.createElement("a");
+link.href = `https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(a.pmid)}/`;
+link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = a.title || "(untitled)";
+h.appendChild(link);
+const meta = document.createElement("p"); meta.className = "meta";
+meta.textContent = `${authorLine(a.authors)}. ${a.journal}${a.year ? ", " + a.year : ""}.`;
+body.append(h, meta);
+const keep = a.types.filter(t => !/^(Journal Article|Research Support.*)$/.test(t)).slice(0, 4);
+if (keep.length) {
+const tags = document.createElement("div"); tags.className = "tags";
+keep.forEach(t => { const s = document.createElement("span"); s.className = "tag"; s.textContent = t; tags.appendChild(s); });
+body.appendChild(tags);
+}
+if (a.abstract.length) {
+const d = document.createElement("details");
+const sm = document.createElement("summary"); sm.textContent = "Abstract"; d.appendChild(sm);
+const p = document.createElement("p"); p.className = "abs";
+a.abstract.forEach((seg, k) => {
+if (seg.label) { const b = document.createElement("b"); b.textContent = seg.label + ": "; p.appendChild(b); }
+p.appendChild(document.createTextNode(seg.text + (k < a.abstract.length - 1 ? "\n\n" : "")));
+});
+d.appendChild(p); body.appendChild(d);
+}
+const links = document.createElement("div"); links.className = "links";
+links.appendChild(document.createTextNode(`PMID ${a.pmid}`));
+if (a.doi) {
+links.appendChild(document.createTextNode(" · "));
+const dl = document.createElement("a");
+dl.href = "https://doi.org/" + a.doi.split("/").map(encodeURIComponent).join("/");
+dl.target = "_blank"; dl.rel = "noopener noreferrer"; dl.textContent = "DOI " + a.doi;
+links.appendChild(dl);
+}
+body.appendChild(links);
+li.append(cb, body); list.appendChild(li);
+});
+toolbar.classList.add("on"); updateCount();
+}
+const selected = () => [...list.querySelectorAll("input[type=checkbox]:checked")].map(c => articles[+c.dataset.i]);
+const updateCount = () => { countEl.textContent = `${selected().length} of ${articles.length} selected`; };
+list.addEventListener("change", updateCount);
+$("selAll").onclick = () => { list.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = true); updateCount(); };
+$("selNone").onclick = () => { list.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = false); updateCount(); };
+function download(name, text, mime) {
+const url = URL.createObjectURL(new Blob([text], { type: mime }));
+const a = document.createElement("a"); a.href = url; a.download = name;
+document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+const needSel = () => { const s = selected(); if (!s.length) setStatus("Select at least one article first.", true); return s; };
+function toRIS(items) {
+return items.map((a) => {
+const L = ["TY  - JOUR", `TI  - ${a.title}`];
+a.authors.forEach(x => L.push(`AU  - ${x.fore ? x.last + ", " + x.fore : x.last}`));
+if (a.journal) L.push(`JO  - ${a.journal}`);
+if (a.year) L.push(`PY  - ${a.year}`);
+if (a.volume) L.push(`VL  - ${a.volume}`);
+if (a.issue) L.push(`IS  - ${a.issue}`);
+if (a.pages) { const [sp, ep] = a.pages.split("-"); L.push(`SP  - ${sp}`); if (ep) L.push(`EP  - ${ep}`); }
+if (a.doi) L.push(`DO  - ${a.doi}`);
+const ab = a.abstract.map(s => (s.label ? s.label + ": " : "") + s.text).join(" ");
+if (ab) L.push(`AB  - ${ab}`);
+L.push(`UR  - https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`, `AN  - ${a.pmid}`, "ER  - ");
+return L.join("\r\n");
+}).join("\r\n\r\n") + "\r\n";
+}
+const csvCell = (v) => {
+let s = String(v ?? "");
+if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   // neutralize spreadsheet formulas
+return `"${s.replace(/"/g, '""')}"`;
+};
+function toCSV(items) {
+const head = ["PMID", "Title", "Authors", "Journal", "Year", "Volume", "Issue", "Pages", "DOI", "Types", "URL", "Abstract"];
+const rows = items.map(a => [a.pmid, a.title, a.authors.map(x => x.fore ? `${x.last} ${x.fore}` : x.last).join("; "),
+a.journal, a.year, a.volume, a.issue, a.pages, a.doi, a.types.join("; "),
+`https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`, a.abstract.map(s => (s.label ? s.label + ": " : "") + s.text).join(" ")]);
+return "﻿" + [head, ...rows].map(r => r.map(csvCell).join(",")).join("\r\n");
+}
+const citation = (a) => `${authorLine(a.authors)}. ${a.title}. ${a.journal}. ${a.year}` +
+`${a.volume ? ";" + a.volume : ""}${a.issue ? "(" + a.issue + ")" : ""}${a.pages ? ":" + a.pages : ""}.` +
+`${a.doi ? " doi:" + a.doi : ""} PMID: ${a.pmid}`;
+$("dlRis").onclick = () => { const s = needSel(); if (s.length) download("reading_list.ris", toRIS(s), "application/x-research-info-systems"); };
+$("dlCsv").onclick = () => { const s = needSel(); if (s.length) download("reading_list.csv", toCSV(s), "text/csv;charset=utf-8"); };
+$("copyCit").onclick = async () => {
+const s = needSel(); if (!s.length) return;
+const text = s.map((a, i) => `${i + 1}. ${citation(a)}`).join("\n");
+try { await navigator.clipboard.writeText(text); setStatus(`Copied ${s.length} citations.`); }
+catch { setStatus("Copy was blocked by the browser. Use Export RIS or CSV instead.", true); }
+};
+form.addEventListener("submit", search);
+/* ---------- Query checking (PubMed only, no key needed) ---------- */
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const MESH_RE = [/"([^"]+?)"\s*\[(?:MeSH Terms|MeSH|mh)(?::noexp)?\]/gi,
+/(?:^|[\s(])([A-Za-z][A-Za-z\-]*)\s*\[(?:MeSH Terms|MeSH|mh)(?::noexp)?\]/gi];
+function meshNames(term) {
+const out = new Set();
+MESH_RE.forEach(re => { re.lastIndex = 0; let m; while ((m = re.exec(term)) && out.size < 12) out.add(m[1].trim()); });
+return [...out];
+}
+async function checkQuery(term) {
+const j = await getJSON(EUTILS + "esearch.fcgi?" + new URLSearchParams({
+db: "pubmed", term, retmode: "json", retmax: "0", tool: TOOL }));
+const r = j.esearchresult || {};
+const notes = [];
+if (r.ERROR) notes.push("PubMed could not parse this query: " + r.ERROR);
+const el = r.errorlist || {}, wl = r.warninglist || {};
+(el.phrasesnotfound || []).forEach(p => notes.push(`Phrase not found in PubMed: ${p}`));
+(el.fieldsnotfound || []).forEach(p => notes.push(`Unknown field tag: ${p}`));
+(wl.quotedphrasesnotfound || []).forEach(p => notes.push(`Quoted phrase not found: ${p}`));
+(wl.phrasesignored || []).forEach(p => notes.push(`Ignored by PubMed: ${p}`));
+(wl.outputmessages || []).forEach(p => notes.push(p));
+const mesh = [];
+for (const name of meshNames(term)) {
+await sleep(350);   // stay under NCBI's 3 requests/second
+const m = await getJSON(EUTILS + "esearch.fcgi?" + new URLSearchParams({
+db: "mesh", term: `"${name}"[MeSH Terms]`, retmode: "json", retmax: "0", tool: TOOL }));
+mesh.push({ name, ok: parseInt((m.esearchresult || {}).count || "0", 10) > 0 });
+}
+return { count: parseInt(r.count || "0", 10), translation: r.querytranslation || "", notes, mesh, hadError: !!r.ERROR };
+}
+function showCheck(box, d) {
+box.replaceChildren();
+const p = document.createElement("p"); p.style.margin = "0";
+p.textContent = d.hadError ? "This query has a problem." : `PubMed reports ${d.count.toLocaleString()} results for this query.`;
+if (!d.hadError && d.count === 0) p.textContent += " Try broader terms.";
+if (!d.hadError && d.count > 5000) p.textContent += " That's a lot. Consider narrowing it.";
+box.appendChild(p);
+if (d.mesh.length) {
+const ul = document.createElement("ul");
+d.mesh.forEach(m => {
+const li = document.createElement("li"); li.className = m.ok ? "ok" : "bad";
+li.textContent = m.ok ? `MeSH term found: ${m.name}` : `MeSH term not found: ${m.name} (check spelling or replace it)`;
+ul.appendChild(li);
+});
+box.appendChild(ul);
+const h = document.createElement("p"); h.className = "hint"; h.style.margin = "0";
+h.textContent = "MeSH check looks the name up in NLM's MeSH database. It can also match entry terms, so confirm the exact heading in the MeSH Browser.";
+box.appendChild(h);
+}
+if (d.notes.length) {
+const ul = document.createElement("ul");
+d.notes.forEach(n => { const li = document.createElement("li"); li.className = "bad"; li.textContent = n; ul.appendChild(li); });
+box.appendChild(ul);
+}
+if (d.translation) {
+const det = document.createElement("details"); const sm = document.createElement("summary");
+sm.textContent = "How PubMed interpreted it"; det.appendChild(sm);
+const pre = document.createElement("pre"); pre.textContent = d.translation; det.appendChild(pre); box.appendChild(det);
+}
+box.hidden = false;
+}
+async function runCheck(term, box) {
+box.hidden = false; box.textContent = "Checking against PubMed...";
+try { showCheck(box, await checkQuery(term)); }
+catch (err) { box.textContent = err instanceof TypeError ? "Could not reach PubMed to check the query." : err.message; }
+}
+$("chk").onclick = async () => {
+const t = $("q").value.trim();
+if (!t) { setStatus("Type or paste a query first.", true); return; }
+$("chk").disabled = true; await runCheck(buildTerm(), $("checkOut")); $("chk").disabled = false;
+};
+/* ---------- AI query helper (calls the chosen model with the user's own key) ---------- */
+const SYSTEM = [
+"You are an expert medical librarian who writes PubMed search strategies.",
+"Given a research topic, write ONE PubMed query.",
+"Rules: split the topic into concepts. Join concepts with AND and synonyms inside a concept with OR.",
+"For each concept, pair a MeSH heading, written \"Heading Name\"[MeSH Terms], with free-text synonyms using \"phrase\"[tiab].",
+"Use quotes for phrases and * truncation sparingly. Wrap each OR group in parentheses.",
+"Only use MeSH headings you are confident exist; the page verifies them. Do not claim you verified anything.",
+"Do not add date or article-type filters unless asked, because the page has filters for those.",
+"Reply with 1 to 3 short sentences explaining the strategy, then the final query alone in a fenced code block tagged pubmed.",
+"If the request is too vague, ask one short clarifying question and include no code block.",
+"Never request patient data. If the user includes personal health information, tell them to remove it and do not repeat it.",
+"Keep the query under 1500 characters."
+].join(" ");
+const store = {
+get(k) { try { return localStorage.getItem(k) || sessionStorage.getItem(k) || ""; } catch { return ""; } },
+set(k, v, persist) { try { sessionStorage.removeItem(k); localStorage.removeItem(k);
+(persist ? localStorage : sessionStorage).setItem(k, v); } catch { /* storage unavailable */ } },
+clear(k) { try { sessionStorage.removeItem(k); localStorage.removeItem(k); } catch { } }
+};
+const PROVIDERS = {
+gemini: { label: "Google Gemini API key", ph: "AIza...", model: "gemini-3.5-flash-lite",
+help: "Get a free key at aistudio.google.com. Free-tier limits are small and per model, so if you hit a limit, try a different model name." },
+claude: { label: "Anthropic API key", ph: "sk-ant-...", model: "claude-haiku-5-5",
+help: "Anthropic API usage is billed to your key (console.anthropic.com)." }
+};
+let provider = store.get("pm_provider"); if (!PROVIDERS[provider]) provider = "gemini";
+const persisted = (k) => { try { return !!localStorage.getItem(k); } catch { return false; } };
+function loadProvider() {
+const P = PROVIDERS[provider];
+$("provider").value = provider; $("keyLabel").textContent = P.label; $("apiKey").placeholder = P.ph;
+$("keyHelp").textContent = P.help;
+$("apiKey").value = store.get("pm_key_" + provider);
+$("model").value = store.get("pm_model_" + provider) || P.model;
+$("remember").checked = persisted("pm_key_" + provider);
+}
+const saveSettings = () => {
+const k = $("apiKey").value.trim();
+if (k) store.set("pm_key_" + provider, k, $("remember").checked); else store.clear("pm_key_" + provider);
+store.set("pm_model_" + provider, $("model").value.trim(), true);
+store.set("pm_provider", provider, true);
+};
+loadProvider();
+$("apiKey").addEventListener("change", saveSettings);
+$("remember").addEventListener("change", saveSettings);
+$("model").addEventListener("change", saveSettings);
+$("provider").addEventListener("change", () => {
+saveSettings();                       // save the old provider's key and model first
+provider = $("provider").value; store.set("pm_provider", provider, true); loadProvider();
+});
+const chat = $("chat"); let history = [], busy = false;
+function addMsg(role, text, opts = {}) {
+const d = document.createElement("div"); d.className = `msg ${role}${opts.err ? " err" : ""}`;
+const who = document.createElement("div"); who.className = "who";
+who.textContent = role === "user" ? "You" : "AI helper";
+d.appendChild(who);
+const body = text.replace(/```[\s\S]*?```/g, "").trim();
+if (body) { const p = document.createElement("p"); p.textContent = body; d.appendChild(p); }
+if (opts.query) {
+const pre = document.createElement("pre"); pre.className = "q"; pre.textContent = opts.query; d.appendChild(pre);
+const b = document.createElement("div"); b.className = "btns";
+const use = document.createElement("button"); use.type = "button"; use.className = "secondary"; use.textContent = "Use in search box";
+use.onclick = () => { $("q").value = opts.query; $("q").focus(); $("q").scrollIntoView({ block: "center" });
+setStatus("Query copied into the search box. Click Search PubMed when ready."); };
+const chk = document.createElement("button"); chk.type = "button"; chk.className = "secondary"; chk.textContent = "Check again";
+const out = document.createElement("div"); out.className = "checkout"; out.hidden = true;
+chk.onclick = () => runCheck(opts.query, out);
+b.append(use, chk); d.append(b, out);
+d._out = out;
+}
+chat.appendChild(d); return d;
+}
+async function askAI(text) {
+const key = $("apiKey").value.trim(), model = $("model").value.trim() || PROVIDERS[provider].model;
+const pname = provider === "gemini" ? "Google Gemini" : "Anthropic";
+if (!key) { $("aiSettings").open = true; addMsg("assistant", `Add your ${pname} API key under AI settings to use the helper. You can still type a query yourself and use Check query.`, { err: true }); return; }
+saveSettings();
+history.push({ role: "user", content: text });
+let msgs = history.slice(-10); while (msgs.length && msgs[0].role !== "user") msgs.shift();
+let url, headers, body;
+if (provider === "gemini") {
+url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+headers = { "content-type": "application/json", "x-goog-api-key": key };
+body = { systemInstruction: { parts: [{ text: SYSTEM }] },
+contents: msgs.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+generationConfig: { maxOutputTokens: 2048, temperature: 0.3 } };
+} else {
+url = "https://api.anthropic.com/v1/messages";
+headers = { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01",
+"anthropic-dangerous-direct-browser-access": "true" };
+body = { model, max_tokens: 1200, system: SYSTEM, messages: msgs };
+}
+let r;
+try { r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) }); }
+catch { history.pop(); addMsg("assistant", `Could not reach ${pname}. Check your connection and try again.`, { err: true }); return; }
+let data = {}; try { data = await r.json(); } catch { }
+if (!r.ok) {
+history.pop();
+const em = (data.error && data.error.message) || "";
+let why;
+if (r.status === 429) why = provider === "gemini"
+? "Google says your free-tier quota for this model is used up (it can be a daily limit). Wait, or enter a different model name in AI settings."
+: "Anthropic is rate limiting this key. Wait a moment and try again.";
+else if (r.status === 401 || r.status === 403 || (r.status === 400 && /api key/i.test(em)))
+why = `${pname} rejected the API key. Check that it is correct and enabled.`;
+else if (r.status === 404) why = `${pname} could not find the model "${model}". Check the model name in AI settings.`;
+else why = em ? `${pname} error: ${em}` : `${pname} returned an error (HTTP ${r.status}).`;
+addMsg("assistant", why, { err: true }); return;
+}
+const reply = provider === "gemini"
+? ((((data.candidates || [])[0] || {}).content || {}).parts || []).map(p => p.text || "").join("")
+: ((data.content || []).find(c => c.type === "text") || {}).text || "";
+if (!reply) {
+history.pop();
+const blocked = data.promptFeedback && data.promptFeedback.blockReason;
+addMsg("assistant", blocked ? "The provider blocked that request. Try rephrasing." : "The model returned an empty reply. Try rephrasing.", { err: true }); return;
+}
+history.push({ role: "assistant", content: reply });
+const m = reply.match(/```(?:pubmed|text)?[ \t]*\r?\n([\s\S]*?)```/);
+const query = m ? m[1].trim() : "";
+const node = addMsg("assistant", reply, { query: query || undefined });
+if (query) runCheck(query, node._out);
+}
+$("chatForm").addEventListener("submit", async (e) => {
+e.preventDefault(); if (busy) return;
+const t = $("chatIn").value.trim(); if (!t) return;
+busy = true; $("chatSend").disabled = true; $("chatSend").textContent = "Thinking...";
+addMsg("user", t); $("chatIn").value = "";
+try { await askAI(t); } finally { busy = false; $("chatSend").disabled = false; $("chatSend").textContent = "Send"; }
+});
+/* Automatic opening message. It is shown locally and never sent to the AI model. */
+const GREETING = "Hello! Please provide a research topic or clinical question, and I will create a tailored PubMed search strategy for you.";
+function greet() { chat.replaceChildren(); addMsg("assistant", GREETING); }
+$("chatClear").onclick = () => { history = []; greet(); };
+greet();
 })();
 </script>
 <script>
 (function () {
-  var d = document.getElementById("welcome");
-  var ok = document.getElementById("welcomeOk");
-  if (!d) return;
-  ok.addEventListener("click", function () { d.close(); });
-  try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
+var d = document.getElementById("welcome");
+var ok = document.getElementById("welcomeOk");
+if (!d) return;
+ok.addEventListener("click", function () { d.close(); });
+try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
 })();
 </script>
 </body>
