@@ -212,7 +212,7 @@
       <span class="logo" aria-hidden="true">M</span>
       <div>
         <div class="brand-name">MiniResearch</div>
-        <div class="brand-tag">Peronal PubMed reading list builder</div>
+        <div class="brand-tag">Personal PubMed reading list builder</div>
       </div>
     </div>
     <div class="spacer"></div>
@@ -227,7 +227,7 @@
         <h2 id="helperTitle">AI query helper</h2>
         <span class="pill">Gemini or Claude</span>
       </div>
-      <p class="card-sub">Describe your topic in plain language. The helper suggests a PubMed query, runs against the PubMed db. Review every query before relying on it.</p>
+      <p class="card-sub">Describe your topic in plain language. The helper suggests a PubMed query, runs it against PubMed. Review every query before relying on it.</p>
       <div id="chat" class="chat" aria-live="polite"></div>
       <form id="chatForm" class="form" autocomplete="off">
         <label for="chatIn" class="sr">Describe your research topic</label>
@@ -255,7 +255,7 @@
             <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza..."></div>
           <p class="hint" id="keyHelp"></p>
           <label class="check-row"><input type="checkbox" id="remember"> Remember API key on this device</label>
-          <p class="hint">Your key stays in this browser and is sent only to the AI model. Prompts go to that model too. Free tiers may let the model use submitted text to improve its products, so check the provider's current terms. Do not remember your key on a shared computer.</p>
+          <p class="hint">Your key stays in this browser. Free tiers may let the model use submitted text to improve its products, so check the provider's current terms. Do not remember your key on a shared computer.</p>
         </div>
       </details>
     </section>
@@ -641,7 +641,7 @@
   };
   const PROVIDERS = {
     gemini: { label: "Google Gemini API key", ph: "AIza...", model: "gemini-3.5-flash-lite",
-              help: "Get a free key at aistudio.google.com. Free-tier limits are small and per model, so if you hit a limit, try a different model name (your usage page lists what your key can use)." },
+              help: "Get a free key at aistudio.google.com. Free-tier limits are small and per model, so if you hit a limit, try a different model name." },
     claude: { label: "Anthropic API key", ph: "sk-ant-...", model: "claude-haiku-5-5",
               help: "Anthropic API usage is billed to your key (console.anthropic.com)." }
   };
