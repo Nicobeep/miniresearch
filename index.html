@@ -8,16 +8,16 @@
 <style>
   :root {
     --bg: #f6f7fb; --surface: #ffffff; --surface-2: #f1f3f9; --text: #0f172a; --muted: #64748b;
-    --line: #e2e8f0; --accent: #4f46e5; --accent-hover: #4338ca; --accent-soft: #eef2ff;
+    --line: #e2e8f0; --accent: #1e3a5f; --accent-hover: #162d4a; --accent-soft: #eaf0f7;
     --danger: #dc2626; --danger-soft: #fef2f2; --ok: #15803d;
     --shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 6px 18px rgba(15, 23, 42, .06);
-    --radius: 14px; --focus: 0 0 0 3px rgba(79, 70, 229, .35);
+    --radius: 14px; --focus: 0 0 0 3px rgba(30, 58, 95, .35);
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0b0d14; --surface: #141826; --surface-2: #1b2030; --text: #e5e7eb; --muted: #94a3b8;
-      --line: #262c3d; --accent: #818cf8; --accent-hover: #a5b4fc; --accent-soft: #1e2140;
+      --line: #262c3d; --accent: #9fb8d9; --accent-hover: #c3d4ea; --accent-soft: #1a2533;
       --danger: #f87171; --danger-soft: #2a1718; --ok: #4ade80;
       --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .3);
       color-scheme: dark;
@@ -42,8 +42,8 @@
   .topbar-inner { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
   .logo {
     width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
-    background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 800; font-size: 16px;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, .35);
+    background: linear-gradient(135deg, #2f5383, #1e3a5f); color: #fff; font-weight: 800; font-size: 16px;
+    box-shadow: 0 4px 12px rgba(30, 58, 95, .35);
   }
   .brand-name { font-weight: 700; font-size: 1rem; }
   .brand-tag { color: var(--muted); font-size: .82rem; }
@@ -96,6 +96,10 @@
   fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 8px; }
   .hint { color: var(--muted); font-size: .8rem; margin: 0; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* query box wraps long searches onto new lines */
+  #q { height: auto; min-height: 44px; padding: 9px 12px; line-height: 1.45; resize: vertical;
+       white-space: pre-wrap; overflow-wrap: anywhere; }
 
   /* chips for article types */
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -195,6 +199,16 @@
   footer { color: var(--muted); font-size: .8rem; line-height: 1.6; padding: 0 4px 24px; }
   footer p { margin: 0 0 4px; }
 
+  /* welcome dialog */
+  dialog.welcome {
+    border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--text);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, .25); padding: 24px; max-width: min(440px, calc(100vw - 32px));
+  }
+  dialog.welcome::backdrop { background: rgba(15, 23, 42, .45); }
+  dialog.welcome h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+  dialog.welcome p { margin: 0 0 16px; color: var(--muted); font-size: .95rem; }
+  dialog.welcome .actions { justify-content: flex-end; }
+
   @media (max-width: 520px) {
     .layout { padding: 14px; gap: 14px; }
     .card { padding: 14px; }
@@ -206,13 +220,18 @@
 </style>
 </head>
 <body>
+<dialog class="welcome" id="welcome" aria-labelledby="welcomeTitle">
+  <h2 id="welcomeTitle">Welcome to MiniResearch</h2>
+  <p>Personal web app for building a PubMed reading list. Search PubMed, pick the articles you want, and export them for EndNote, Zotero, or a spreadsheet.</p>
+  <div class="actions"><button class="primary" id="welcomeOk" type="button">Get started</button></div>
+</dialog>
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
       <span class="logo" aria-hidden="true">M</span>
       <div>
         <div class="brand-name">MiniResearch</div>
-        <div class="brand-tag">Personal PubMed reading list builder</div>
+        <div class="brand-tag">PubMed reading list builder, fast</div>
       </div>
     </div>
     <div class="spacer"></div>
@@ -265,8 +284,8 @@
       <form id="searchForm" class="form" autocomplete="off">
         <div class="field">
           <label for="q">Query</label>
-          <input id="q" type="text" required
-                 placeholder='e.g. "Temporomandibular Joint Disorders"[MeSH] AND (anxiety OR depression)'>
+          <textarea id="q" rows="2" required spellcheck="false"
+                 placeholder='e.g. "Temporomandibular Joint Disorders"[MeSH] AND (anxiety OR depression)'></textarea>
           <p class="hint">PubMed syntax works: MeSH terms, [tiab] fields, AND / OR / NOT, quotes.</p>
         </div>
 
@@ -312,7 +331,7 @@
 
   <section class="col-right" aria-label="Results">
     <div class="notice" role="note">
-      <strong>This web app runs on NCBI PubMed database.</strong>. Verify every citation against the publisher or PubMed.
+      <strong>This web app runs on NCBI PubMed database.</strong> Verify every citation against the publisher or PubMed.
     </div>
 
     <section class="card" aria-labelledby="resultsTitle">
@@ -748,6 +767,15 @@
     try { await askAI(t); } finally { busy = false; $("chatSend").disabled = false; $("chatSend").textContent = "Suggest query"; }
   });
   $("chatClear").onclick = () => { history = []; chat.replaceChildren(); };
+})();
+</script>
+<script>
+(function () {
+  var d = document.getElementById("welcome");
+  var ok = document.getElementById("welcomeOk");
+  if (!d) return;
+  ok.addEventListener("click", function () { d.close(); });
+  try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
 })();
 </script>
 </body>
