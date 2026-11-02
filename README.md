@@ -1,4 +1,4 @@
-# Workflow: PubMed Reading List Builder (index.html)
+# Workflow: PubMed Reading List Builder + Anthropic/Gemini
 
 A single web page that helps you build a PubMed search, pick articles, and export them. It has no server and no install step.
 
