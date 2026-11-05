@@ -24,6 +24,9 @@ Configuration: environment variables, or a .env file next to this script.
     PORT                default 8000
     NCBI_BASE, GEMINI_BASE, ANTHROPIC_BASE   override upstream URLs (used for testing)
 
+PubMed calls are throttled and retried (up to 3 times) when PubMed is busy or briefly down.
+Failed or empty-on-error replies are never cached.
+
 Privacy: search text and AI prompts are never written to the log.
 """
 import json
@@ -98,21 +101,41 @@ SYSTEM = " ".join([
 
 
 class ApiError(Exception):
-    def __init__(self, status, message):
+    def __init__(self, status, message, retry=False, retry_after=None):
         super().__init__(message)
         self.status = status
         self.message = message
+        self.retry = retry              # worth trying again after a short wait
+        self.retry_after = retry_after  # seconds NCBI asked us to wait, if it said
 
 
 # ---------------------------------------------------------------- PubMed (NCBI)
 
 _ncbi_lock = threading.Lock()
 _ncbi_last = [0.0]
+RETRY_WAITS = (1.0, 2.5, 5.0)  # seconds to wait before retry 1, 2 and 3
+TRANSIENT_HTTP = {429, 500, 502, 503, 504}
+
+NCBI_BUSY = "PubMed is rate limiting requests. Wait a few seconds and try again."
+NCBI_DOWN = ("PubMed's search service is having a problem right now. This is on NCBI's side, "
+             "not yours. Try again in a few minutes.")
+UNEXPECTED_PUBMED = ApiError(
+    502, "PubMed returned an unexpected response. A firewall, proxy or security filter on your network "
+         "may be replacing it. Try another network, or check with UW-IT.")
 
 
-def ncbi(endpoint, params):
-    """Call NCBI E-utilities with a shared throttle (3/s, or 10/s with a key)."""
-    gap = 0.11 if NCBI_KEY else 0.36
+def _retry_after(e):
+    try:
+        return min(float(e.headers.get("Retry-After", "")), 10.0)
+    except (TypeError, ValueError):
+        return None
+
+
+def _ncbi_request(endpoint, params):
+    """One throttled request to NCBI. Raises ApiError (retry=True when trying again is worthwhile)."""
+    # Limits are 3/s without a key and 10/s with one. Stay well under them, because other
+    # programs on the same network address (browser tabs, other scripts) share the same limit.
+    gap = 0.11 if NCBI_KEY else 0.5
     with _ncbi_lock:
         wait = _ncbi_last[0] + gap - time.monotonic()
         if wait > 0:
@@ -129,23 +152,47 @@ def ncbi(endpoint, params):
             return r.read()
     except urllib.error.HTTPError as e:
         if e.code == 429:
-            raise ApiError(429, "PubMed is rate limiting requests. Wait a few seconds and try again.")
+            raise ApiError(429, NCBI_BUSY, retry=True, retry_after=_retry_after(e))
+        if e.code in TRANSIENT_HTTP:
+            raise ApiError(503, f"{NCBI_DOWN} (HTTP {e.code})", retry=True, retry_after=_retry_after(e))
         raise ApiError(502, f"PubMed returned an error (HTTP {e.code}).")
     except OSError:
-        raise ApiError(502, "Could not reach PubMed. Check the server's internet connection.")
+        raise ApiError(502, "Could not reach PubMed. Check the server's internet connection.", retry=True)
 
 
-UNEXPECTED_PUBMED = ApiError(
-    502, "PubMed returned an unexpected response. A firewall, proxy or security filter on your network "
-         "may be replacing it. Try another network, or check with UW-IT.")
+def _check_json(raw):
+    """Parse an E-utilities JSON reply. NCBI sometimes reports failures inside a normal reply."""
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        raise UNEXPECTED_PUBMED
+    if not isinstance(data, dict):
+        raise UNEXPECTED_PUBMED
+    msg = str(data.get("error") or (data.get("esearchresult") or {}).get("ERROR") or "")
+    low = msg.lower()
+    if "rate limit" in low:
+        raise ApiError(429, NCBI_BUSY, retry=True)
+    if "temporarily unavailable" in low or "backend failed" in low or re.search(r"status: 5\d\d", low):
+        raise ApiError(503, NCBI_DOWN, retry=True)
+    if data.get("error") and "esearchresult" not in data:
+        raise ApiError(502, "PubMed returned an error: " + msg[:200])
+    return data
+
+
+def ncbi(endpoint, params, as_json=False):
+    """Call NCBI, retrying a few times with growing waits when PubMed is busy or briefly down."""
+    for attempt in range(len(RETRY_WAITS) + 1):
+        try:
+            raw = _ncbi_request(endpoint, params)
+            return _check_json(raw) if as_json else raw
+        except ApiError as e:
+            if not e.retry or attempt == len(RETRY_WAITS):
+                raise
+            time.sleep(e.retry_after or RETRY_WAITS[attempt])
 
 
 def ncbi_json(endpoint, params):
-    raw = ncbi(endpoint, params)
-    try:
-        return json.loads(raw)
-    except ValueError:
-        raise UNEXPECTED_PUBMED
+    return ncbi(endpoint, params, as_json=True)
 
 
 class Cache:
@@ -276,6 +323,8 @@ def api_search(params):
         raise ApiError(400, "PubMed could not understand that query. Check the syntax and try again.")
     ids = res.get("idlist", [])
     articles = parse_articles(ncbi("efetch.fcgi", {"db": "pubmed", "id": ",".join(ids), "retmode": "xml"})) if ids else []
+    if ids and not articles:  # never cache a reply that lost its article details
+        raise ApiError(503, NCBI_DOWN)
     result = {"term": term, "total": int(res.get("count") or 0), "articles": articles}
     search_cache.put(key, result)
     return {**result, "cached": False}
